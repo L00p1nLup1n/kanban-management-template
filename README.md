@@ -57,6 +57,43 @@ export default {
 }
 ```
 
+## Backend
+
+This repository now contains a fully functional backend under `src/backend`.
+
+- Backend entry: `src/backend/src/index.js` (Express + Mongoose + JWT auth)
+- Database: MongoDB running locally on `localhost:27017/kanban`
+- Server: Running on `http://localhost:4000`
+
+### Quick Start
+
+```bash
+cd src/backend
+npm install
+
+# Database is already initialized with demo data!
+# Demo credentials: demo@kanban.local / demo123
+
+# Start server
+npm start
+
+# Or with auto-reload
+npm run dev
+```
+
+### Available Commands
+
+```bash
+npm run dev              # Start with auto-reload
+npm run init-db          # Reset database with demo data
+npm run test-connection  # Test MongoDB connection
+npm run test-api         # Test all API endpoints
+```
+
+See [src/backend/INITIALIZATION.md](src/backend/INITIALIZATION.md) for full details, API documentation, and test examples.
+
+Note: The frontend code remains under `src/` and a separate Vite entry `src/frontend/main.tsx` was added to make the separation explicit. The main `index.html` now loads `/src/frontend/main.tsx`.
+
 - Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
 - Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
 - Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list

@@ -1,14 +1,14 @@
-import { ColumnType } from './enums';
-
 export interface TaskModel {
   id: string;
   title: string;
-  column: ColumnType;
+  // column is a free-form key (supports custom columns)
+  column: string;
   color: string;
 }
 
 export interface DragItem {
   index: number;
   id: TaskModel['id'];
-  from: ColumnType;
+  // origin column key
+  from: string;
 }

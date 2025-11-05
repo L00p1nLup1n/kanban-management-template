@@ -1,11 +1,13 @@
-import { Heading, Container, SimpleGrid, Flex, Highlight, useColorModeValue } from '@chakra-ui/react';
+import { Heading, Container, SimpleGrid, Flex, Highlight, useColorModeValue, HStack, Text, Button } from '@chakra-ui/react';
 import Column from './components/Column/Column';
 import { ColumnType } from './utils/enums';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import DarkModeIconButton from './components/DarkModeIconButton/DarkModeIconButton';
+import { useAuth } from './hooks/useAuth';
 
 function App() {
+  const { user, logout } = useAuth();
 
   return (
     <main>
@@ -20,22 +22,24 @@ function App() {
             fontWeight="bold"
             textAlign={{ base: 'left', md: 'center' }}
             color="#5C8984"
-            // bgGradient="linear(to-t, #5C8984, #A0C49D)"
-            // bgClip="text"
           >
             <Highlight
               query="usefull"
-              styles={{ px: {base: '2', sm: '6'}, rounded: 'xl', bg: 'green.100', color: '#5C8984'}}
+              styles={{ px: { base: '2', sm: '6' }, rounded: 'xl', bg: 'green.100', color: '#5C8984' }}
             >
               One more usefull KANBAN Board
             </Highlight>
           </Heading >
-          <DarkModeIconButton
-            bgColor='transparent'
-            _hover={{ bgColor: useColorModeValue('#FFD9B7', 'gray.700') }}
-            fontSize={{ base: 'lg', md: '2xl' }}
-            rounded="full"
-          />
+          <HStack spacing={3} alignItems="center">
+            <DarkModeIconButton
+              bgColor='transparent'
+              _hover={{ bgColor: useColorModeValue('#FFD9B7', 'gray.700') }}
+              fontSize={{ base: 'lg', md: '2xl' }}
+              rounded="full"
+            />
+            <Text fontSize={{ base: 'sm', md: 'md' }}>{user?.name || user?.email || 'Guest'}</Text>
+            <Button size="sm" onClick={() => logout()}>Sign out</Button>
+          </HStack>
         </Flex>
       </Container>
       <DndProvider backend={HTML5Backend}>

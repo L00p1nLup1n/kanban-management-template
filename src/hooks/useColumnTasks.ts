@@ -9,7 +9,7 @@ import { ColumnColorScheme } from '../components/Column/Column';
 
 const MAX_TASK_PER_COLUMN = 12;
 
-function useColumnTasks(column: ColumnType) {
+function useColumnTasks(column: string) {
   const [tasks, setTasks] = useTaskCollection();
 
   const columnTasks = tasks[column];
@@ -25,7 +25,7 @@ function useColumnTasks(column: ColumnType) {
       const newColumnTask: TaskModel = {
         id: uuidv4(),
         title: `🕒${column}: new task`,
-        color: pickChakraRandomColor('.200') || ColumnColorScheme[column],
+        color: pickChakraRandomColor('.200') || (ColumnColorScheme[column as ColumnType] ?? 'gray.200'),
         column,
       };
 
@@ -65,7 +65,7 @@ function useColumnTasks(column: ColumnType) {
   );
 
   const dropTaskFrom = useCallback(
-    (from: ColumnType, id: TaskModel['id']) => {
+    (from: string, id: TaskModel['id']) => {
       setTasks((allTasks) => {
         const fromColumnTasks = allTasks[from];
         const toColumnTasks = allTasks[column];

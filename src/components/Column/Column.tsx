@@ -49,32 +49,30 @@ function Column({ column }: { column: ColumnType }) {
   const iconColor400 = `${ColumnColorScheme[column]}.400`;
 
   return (
-    <Box>
-      <Flex
-        justify="center"
-        align="center"
-        gap={2}
-      >
+    <Box w="full" minW={0} display="flex" flexDirection="column">
+      <Flex align="center" gap={2}>
 
-        <Heading
-          w="full"
-          letterSpacing="wide"
-          textAlign="center"
-        >
+        <Heading flex="1" minW={0} letterSpacing="wide" textAlign="center">
           <Badge
-            w="full"
-            px={6}
-            py={3.5}
+            display="block"
+            flex="1"
+            minW={0}
+            px={{ base: 3, md: 6 }}
+            py={3}
             rounded="xl"
             colorScheme={ColumnColorScheme[column]}
-            fontSize="lg"
+            fontSize={{ base: 'sm', md: 'lg' }}
+            textTransform="none"
+            overflow="hidden"
+            whiteSpace="nowrap"
+            textOverflow="ellipsis"
           >
             {column}
           </Badge>
         </Heading>
         <IconButton
-          size="lg"
-          w="30%"
+          size="sm"
+          minW="44px"
           color={useColorModeValue('gray.800', 'gray.600')}
           bgColor={useColorModeValue(iconColor200, iconColor400)}
           _hover={{ bgColor: useColorModeValue(iconColor100, iconColor200) }}
@@ -99,6 +97,8 @@ function Column({ column }: { column: ColumnType }) {
         boxShadow="md"
         overflow="auto"
         opacity={isOver ? 0.85 : 1}
+        flexGrow={1}
+        minW={0}
       >
         {ColumnTasks}
       </Stack>

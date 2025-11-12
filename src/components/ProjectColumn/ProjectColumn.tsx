@@ -12,6 +12,7 @@ import { AddIcon } from '@chakra-ui/icons';
 import Task from '../Task/Task';
 import useColumnDrop from '../../hooks/useColumnDrop';
 import { TaskModel } from '../../utils/models';
+import { PopulatedUser } from '../../api/client';
 
 function ProjectColumn({
     column,
@@ -22,6 +23,8 @@ function ProjectColumn({
     onDelete,
     onDropFrom,
     onReorder,
+    projectMembers,
+    projectOwnerId,
 }: {
     // internal column key
     column: string;
@@ -33,6 +36,8 @@ function ProjectColumn({
     onDelete: (id: string) => void;
     onDropFrom: (from: string, taskId: string) => void;
     onReorder?: (fromIndex: number, toIndex: number) => void;
+    projectMembers?: (string | PopulatedUser)[];
+    projectOwnerId?: string | PopulatedUser | null;
 }) {
     const { dropRef, isOver } = useColumnDrop(column, onDropFrom);
 
@@ -44,6 +49,8 @@ function ProjectColumn({
             onDropHover={(fromIndex, toIndex) => onReorder && onReorder(fromIndex, toIndex)}
             onUpdate={onUpdate}
             onDelete={onDelete}
+            projectMembers={projectMembers}
+            projectOwnerId={projectOwnerId}
         />
     ));
 

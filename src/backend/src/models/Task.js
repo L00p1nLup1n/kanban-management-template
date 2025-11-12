@@ -6,13 +6,17 @@ const TaskSchema = new Schema({
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
     // columnKey may be undefined for backlog tasks
     columnKey: { type: String },
-    title: { type: String, required: true },
+    title: { type: String},
     description: { type: String },
     color: { type: String },
     order: { type: Number, required: true },
     assigneeId: { type: Schema.Types.ObjectId, ref: 'User' },
     labels: [{ type: String }],
     estimate: { type: Number },
+    dueDate: { type: Date },
+    // Scrumban properties
+    storyPoints: { type: Number },
+    priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     backlog: { type: Boolean, default: false },
 }, { timestamps: true });

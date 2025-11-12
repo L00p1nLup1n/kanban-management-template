@@ -109,7 +109,7 @@ function Login() {
           <Text textAlign="center" fontSize="sm" color="gray.600">
             Don&apos;t have an account?{' '}
             <ChakraLink as={RouterLink} to="/register" color="blue.500" fontWeight="semibold">
-              Sign up
+              Create one
             </ChakraLink>
           </Text>
 

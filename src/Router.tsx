@@ -4,7 +4,6 @@ import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import ProjectsList from './pages/Projects/ProjectsList';
-import ProjectView from './pages/Projects/ProjectView';
 import ProjectPage from './pages/Project/ProjectPage';
 import App from './App';
 

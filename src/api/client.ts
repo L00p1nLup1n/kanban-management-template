@@ -60,16 +60,22 @@ export interface AuthResponse {
     accessToken: string;
 }
 
+export interface PopulatedUser {
+    _id: string;
+    name?: string;
+    email: string;
+}
+
 export interface Project {
     _id: string;
-    ownerId: string;
+    ownerId: string | PopulatedUser;
     name: string;
     description?: string;
     columns: Column[];
     createdAt: string;
     updatedAt: string;
     joinCode?: string;
-    members?: string[];
+    members?: (string | PopulatedUser)[];
 }
 
 export interface Column {
@@ -90,6 +96,8 @@ export interface Task {
     assigneeId?: string;
     labels?: string[];
     estimate?: number;
+    storyPoints?: number;
+    priority?: 'low' | 'medium' | 'high';
     createdBy: string;
     createdAt: string;
     updatedAt: string;
@@ -137,6 +145,8 @@ export const tasksAPI = {
         order: number;
         description?: string;
         color?: string;
+        storyPoints?: number;
+        priority?: 'low' | 'medium' | 'high';
     }) =>
         apiClient.post<{ task: Task }>(`/projects/${projectId}/tasks`, data),
 
@@ -154,7 +164,7 @@ export const tasksAPI = {
     // Backlog endpoints
     backlog: (projectId: string) =>
         apiClient.get<{ tasks: Task[] }>(`/projects/${projectId}/backlog`),
-    createBacklog: (projectId: string, data: { title: string; description?: string; color?: string; labels?: string[]; estimate?: number }) =>
+    createBacklog: (projectId: string, data: { title: string; description?: string; color?: string; labels?: string[]; estimate?: number; storyPoints?: number; priority?: 'low' | 'medium' | 'high' }) =>
         apiClient.post<{ task: Task }>(`/projects/${projectId}/backlog`, data),
     move: (projectId: string, taskId: string, data: { toColumnKey?: string; backlog?: boolean }) =>
         apiClient.post<{ task: Task }>(`/projects/${projectId}/tasks/${taskId}/move`, data),

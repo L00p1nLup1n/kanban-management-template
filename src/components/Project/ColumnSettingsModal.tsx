@@ -99,7 +99,7 @@ export default function ColumnSettingsModal({ isOpen, onClose, projectColumns, s
                                         <IconButton aria-label="down" icon={<ArrowDownIcon />} size="sm" onClick={() => moveDown(idx)} isDisabled={isBacklog || idx === cols.length - 1} />
                                         <IconButton aria-label="remove" icon={<DeleteIcon />} size="sm" onClick={() => removeCol(idx)} isDisabled={isBacklog} />
                                     </HStack>
-                                    <Text fontSize="sm" color="gray.500">Key: {c.key}{isBacklog ? ' — persistent backlog' : ''}</Text>
+                                    <Text fontSize="sm" color="gray.500">{isBacklog ? 'Backlog cannot be modified' : ''}</Text>
                                 </Box>
                             );
                         })}

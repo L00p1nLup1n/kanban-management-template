@@ -30,7 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         try {
           // Verify token is still valid
           const response = await authAPI.me();
-          setUser(response.data.user);
+          // Normalize the user shape: backend may return a populated user with `_id`.
+          const respUser = response.data.user as unknown;
+          const userObj = (respUser && typeof respUser === 'object') ? (respUser as Record<string, unknown>) : {};
+          const normalized = {
+            id: String(userObj['id'] || userObj['_id'] || ''),
+            email: String(userObj['email'] || ''),
+            name: String(userObj['name'] || ''),
+          };
+          // Keep localStorage in sync with normalized shape
+          localStorage.setItem('user', JSON.stringify(normalized));
+          setUser(normalized);
         } catch (err) {
           // Token invalid, clear storage
           localStorage.removeItem('user');
@@ -48,15 +58,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       setIsLoading(true);
       const response = await authAPI.login(email, password);
-      const { user, accessToken } = response.data;
+      const respUser = response.data.user as unknown;
+      const ru = (respUser && typeof respUser === 'object') ? (respUser as Record<string, unknown>) : {};
+      const normalizedUser = { id: String(ru['id'] || ru['_id'] || ''), email: String(ru['email'] || ''), name: String(ru['name'] || '') };
 
+      const accessToken = response.data.accessToken as string;
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
-      
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      setUser(normalizedUser);
+
       navigate('/projects');
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Login failed';
+    } catch (err: unknown) {
+      // err is unknown in strict TS; try to extract message safely
+      let message = 'Login failed';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const maybe = (err as Record<string, unknown>).response as Record<string, unknown> | undefined;
+        if (maybe && 'data' in maybe) {
+          const d = maybe.data as Record<string, unknown> | undefined;
+          if (d && typeof d.error === 'string') message = d.error;
+        }
+      }
       setError(message);
       throw new Error(message);
     } finally {
@@ -69,15 +90,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setError(null);
       setIsLoading(true);
       const response = await authAPI.register(email, password, name);
-      const { user, accessToken } = response.data;
-
+      const respUser = response.data.user as unknown;
+      const ru = (respUser && typeof respUser === 'object') ? (respUser as Record<string, unknown>) : {};
+      const normalizedUser = { id: String(ru['id'] || ru['_id'] || ''), email: String(ru['email'] || ''), name: String(ru['name'] || '') };
+      const accessToken = response.data.accessToken as string;
       localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('user', JSON.stringify(user));
-      setUser(user);
-      
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+      setUser(normalizedUser);
+
       navigate('/projects');
-    } catch (err: any) {
-      const message = err.response?.data?.error || 'Registration failed';
+    } catch (err: unknown) {
+      let message = 'Registration failed';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const maybe = (err as Record<string, unknown>).response as Record<string, unknown> | undefined;
+        if (maybe && 'data' in maybe) {
+          const d = maybe.data as Record<string, unknown> | undefined;
+          if (d && typeof d.error === 'string') message = d.error;
+        }
+      }
       setError(message);
       throw new Error(message);
     } finally {

@@ -34,7 +34,7 @@ export async function listTasks(req, res) {
 export async function createTask(req, res) {
     try {
         const { projectId } = req.params;
-        const { title, columnKey, order, description, color, labels, estimate } = req.body;
+    const { title, columnKey, order, description, color, labels, estimate, storyPoints, priority } = req.body;
 
         if (!title || order === undefined) {
             return res.status(400).json({ error: 'title and order are required' });
@@ -61,6 +61,8 @@ export async function createTask(req, res) {
             color,
             labels,
             estimate,
+            storyPoints,
+            priority,
             createdBy: req.userId,
         };
 
@@ -100,7 +102,7 @@ export async function updateTask(req, res) {
         }
 
         // Update allowed fields
-        const allowedFields = ['title', 'description', 'color', 'columnKey', 'order', 'assigneeId', 'labels', 'estimate', 'backlog'];
+    const allowedFields = ['title', 'description', 'color', 'columnKey', 'order', 'assigneeId', 'labels', 'estimate', 'storyPoints', 'priority', 'backlog', 'dueDate'];
         allowedFields.forEach(field => {
             if (updates[field] !== undefined) {
                 task[field] = updates[field];
@@ -145,7 +147,7 @@ export async function getBacklog(req, res) {
 export async function createBacklogTask(req, res) {
     try {
         const { projectId } = req.params;
-        const { title, description, color, labels, estimate } = req.body;
+        const { title, description, color, labels, estimate, storyPoints, priority } = req.body;
 
         if (!title) {
             return res.status(400).json({ error: 'title is required' });
@@ -167,6 +169,8 @@ export async function createBacklogTask(req, res) {
             color,
             labels,
             estimate,
+            storyPoints,
+            priority,
             order: Date.now(), // give a stable order value for backlog
             createdBy: req.userId,
             backlog: true,
@@ -303,14 +307,53 @@ export async function reorderTasks(req, res) {
         }
 
         // Bulk update tasks
-        const bulkOps = tasks.map(({ id, order, columnKey }) => ({
-            updateOne: {
-                filter: { _id: id, projectId },
-                update: { order, ...(columnKey && { columnKey }) },
-            },
-        }));
+            // Validate WIP limits before applying bulk updates.
+            // Build a map of current counts per column (excluding backlog)
+            const currentCounts = {};
+            const boardTasks = await Task.find({ projectId, backlog: { $ne: true } });
+            boardTasks.forEach((t) => {
+                const key = t.columnKey || 'backlog';
+                currentCounts[key] = (currentCounts[key] || 0) + 1;
+            });
 
-        await Task.bulkWrite(bulkOps);
+            // Apply proposals to compute resulting counts
+            const resultingCounts = { ...currentCounts };
+            tasks.forEach(({ id, columnKey }) => {
+                // find original task's column
+                const original = boardTasks.find((t) => String(t._id) === String(id));
+                const from = original ? (original.columnKey || 'backlog') : 'backlog';
+                const to = columnKey || 'backlog';
+                if (from === to) return;
+                resultingCounts[from] = Math.max(0, (resultingCounts[from] || 0) - 1);
+                resultingCounts[to] = (resultingCounts[to] || 0) + 1;
+            });
+
+            // Check against project column WIP
+            const wipViolations = [];
+            // Build a quick map for column wip (including backlog if needed)
+            const colWip = {};
+            project.columns.forEach((c) => { colWip[c.key] = c.wip; });
+
+            Object.keys(resultingCounts).forEach((colKey) => {
+                const count = resultingCounts[colKey] || 0;
+                const wip = colWip[colKey];
+                if (wip !== undefined && wip > 0 && count > wip) {
+                    wipViolations.push({ columnKey: colKey, wip, count });
+                }
+            });
+
+            if (wipViolations.length > 0) {
+                return res.status(409).json({ error: 'WIP_EXCEEDED', details: { violations: wipViolations } });
+            }
+
+            const bulkOps = tasks.map(({ id, order, columnKey }) => ({
+                updateOne: {
+                    filter: { _id: id, projectId },
+                    update: { order, ...(columnKey && { columnKey }) },
+                },
+            }));
+
+            await Task.bulkWrite(bulkOps);
         try {
             const io = getIO();
             if (io) io.to(projectId).emit('tasks:reordered', { tasks });

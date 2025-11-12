@@ -15,7 +15,7 @@ dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 const app = express();
 app.use(express.json());
 app.use(cors({ 
-  origin: [
+  origin: [ 
     process.env.FRONTEND_ORIGIN || 'http://localhost:5173',
     'http://localhost:5174'
   ], 

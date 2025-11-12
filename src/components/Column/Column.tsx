@@ -92,7 +92,7 @@ function Column({ column }: { column: ColumnType }) {
         p={3}
         mt={2}
         spacing={4}
-        bgColor={useColorModeValue('gray.50', 'gray.900')}
+  bgColor={useColorModeValue('brand.surfaceLight', 'brand.column')}
         rounded="lg"
         boxShadow="md"
         overflow="auto"

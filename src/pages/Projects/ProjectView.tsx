@@ -1,17 +1,28 @@
-import { Box, Grid, Spinner, Heading, IconButton, useToast, Text } from '@chakra-ui/react';
-import { useParams } from 'react-router-dom';
+import { Box, Grid, Spinner, Heading, IconButton, useToast, Text, Button, HStack, Badge } from '@chakra-ui/react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ColumnType } from '../../utils/enums';
 import ProjectColumn from '../../components/ProjectColumn/ProjectColumn';
 import useProjectTasks, { ProjectColumn as ProjectColumnMeta } from '../../hooks/useProjectTasks';
 import { TaskModel } from '../../utils/models';
 import { useEffect, useState } from 'react';
 import ColumnSettingsModal from '../../components/Project/ColumnSettingsModal';
-import { SettingsIcon } from '@chakra-ui/icons';
+import MembersModal from '../../components/Project/MembersModal';
+import { SettingsIcon, ArrowBackIcon, AtSignIcon } from '@chakra-ui/icons';
 import { useAuth } from '../../hooks/useAuth';
+import DarkModeIconButton from '../../components/DarkModeIconButton/DarkModeIconButton';
 
 function UsernameDisplay() {
     const { user } = useAuth();
     return <Text fontSize="sm">{user?.name || user?.email || 'Guest'}</Text>;
+}
+
+function BackButton() {
+    const navigate = useNavigate();
+    return (
+        <Button size="sm" leftIcon={<ArrowBackIcon />} onClick={() => navigate('/projects')}>
+            Back
+        </Button>
+    );
 }
 
 export default function ProjectView() {
@@ -28,13 +39,17 @@ export default function ProjectView() {
         reorder,
         projectName,
         projectColumns,
+        projectOwnerId,
+        projectMembers,
+        joinCode,
         saveProjectColumns,
     } = useProjectTasks(projectId || '');
     // local optimistic copy used for snappy hover reordering
     const toast = useToast();
     const [colsLocal, setColsLocal] = useState(columns);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
+    const [isMembersOpen, setIsMembersOpen] = useState(false);
+    
     useEffect(() => {
         setColsLocal(columns);
     }, [columns]);
@@ -83,47 +98,66 @@ export default function ProjectView() {
         <Box position="relative">
             <Box mb={4} mt={4}>
                 <Heading textAlign="center" w="full">
-                    {projectName || 'Project'}
+                    {projectName || 'No project found'}
                 </Heading>
-                <IconButton
-                    aria-label="settings"
-                    icon={<SettingsIcon />}
-                    size="sm"
-                    position="absolute"
-                    top="8px"
-                    right="8px"
-                    onClick={() => setIsSettingsOpen(true)}
-                />
-                {/* show user name top-left */}
+                {/* show back button top-left */}
                 <Box position="absolute" top="8px" left="8px">
-                    {/* lazy-load auth to avoid heavy re-renders */}
-                    <UsernameDisplay />
+                    <HStack spacing={2}>
+                        {/* Back to projects */}
+                        <BackButton />
+                    </HStack>
+                </Box>
+
+                {/* show user name + settings top-right */}
+                <Box position="absolute" top="8px" right="8px">
+                    <HStack spacing={2}>
+                        {/* lazy-load auth to avoid heavy re-renders */}
+                        <UsernameDisplay />
+                        {/* Members count and button */}
+                        <Button
+                            size="sm"
+                            leftIcon={<AtSignIcon />}
+                            onClick={() => setIsMembersOpen(true)}
+                            variant="ghost"
+                        >
+                            <Badge ml={1}>{(projectMembers?.length || 0) + 1}</Badge>
+                        </Button>
+                        <DarkModeIconButton size="sm"/>
+                        <IconButton
+                            aria-label="settings"
+                            icon={<SettingsIcon />}
+                            size="sm"
+                            onClick={() => setIsSettingsOpen(true)}
+                        />
+                    </HStack>
                 </Box>
             </Box>
             {/* Use auto-fit with minmax so columns resize automatically to fit available width */}
             <Grid templateColumns={{ base: '1fr', md: "repeat(auto-fit, minmax(260px, 1fr))" }} gap={4}>
-                {(projectColumns && projectColumns.length > 0 ? projectColumns.map((c) => c) : Object.values(ColumnType).map((k) => ({ key: k, title: k }))).map((colMeta) => (
-                    <ProjectColumn
-                        key={colMeta.key}
-                        column={colMeta.key}
-                        title={colMeta.title}
-                        tasks={colsLocal[colMeta.key] || []}
-                        onCreate={handleCreate}
-                        onUpdate={handleUpdate}
-                        onDelete={handleDelete}
-                        onDropFrom={(from, taskId) => {
-                            const colMetaFound = projectColumns.find((c: ProjectColumnMeta) => c.key === colMeta.key);
-                            const wip = colMetaFound?.wip;
-                            const count = colsLocal[colMeta.key]?.length || 0;
-                            if (wip !== undefined && wip > 0 && count >= wip) {
-                                toast({ title: 'WIP limit reached', description: `Cannot move task to ${colMeta.title} (WIP ${wip})`, status: 'warning' });
-                                return;
-                            }
-                            moveTask(from, colMeta.key, taskId).then(load);
-                        }}
-                        onReorder={(fromIdx, toIdx) => handleReorder(colMeta.key, fromIdx, toIdx)}
-                    />
-                ))}
+            {(projectColumns && projectColumns.length > 0 ? projectColumns.map((c) => c) : Object.values(ColumnType).map((k) => ({ key: k, title: k }))).map((colMeta) => (
+                <ProjectColumn
+                    key={colMeta.key}
+                    column={colMeta.key}
+                    title={colMeta.title}
+                    tasks={colsLocal[colMeta.key] || []}
+                    onCreate={handleCreate}
+                    onUpdate={handleUpdate}
+                    onDelete={handleDelete}
+                    onDropFrom={(from, taskId) => {
+                        const colMetaFound = projectColumns.find((c: ProjectColumnMeta) => c.key === colMeta.key);
+                        const wip = colMetaFound?.wip;
+                        const count = colsLocal[colMeta.key]?.length || 0;
+                        if (wip !== undefined && wip > 0 && count >= wip) {
+                            toast({ title: 'WIP limit reached', description: `Cannot move task to ${colMeta.title} (WIP ${wip})`, status: 'warning' });
+                            return;
+                        }
+                        moveTask(from, colMeta.key, taskId).then(load);
+                    }}
+                    onReorder={(fromIdx, toIdx) => handleReorder(colMeta.key, fromIdx, toIdx)}
+                    projectMembers={projectMembers}
+                    projectOwnerId={projectOwnerId}
+                />
+            ))}
             </Grid>
             <ColumnSettingsModal
                 isOpen={isSettingsOpen}
@@ -132,6 +166,13 @@ export default function ProjectView() {
                 projectColumns={projectColumns}
                 saveProjectColumns={saveProjectColumns}
                 onSaved={() => { setIsSettingsOpen(false); }}
+            />
+            <MembersModal
+                isOpen={isMembersOpen}
+                onClose={() => setIsMembersOpen(false)}
+                ownerId={projectOwnerId}
+                members={projectMembers}
+                joinCode={joinCode}
             />
         </Box>
     );

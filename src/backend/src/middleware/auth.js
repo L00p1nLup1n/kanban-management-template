@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import process from 'process'
 
 export function authenticate(req, res, next) {
     const authHeader = req.headers.authorization;

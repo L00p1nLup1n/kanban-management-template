@@ -42,7 +42,32 @@ function ProjectsList() {
     setLoading(true);
     try {
       const res = await projectsAPI.list();
-      setProjects(res.data.projects || []);
+      // Normalize ownerId to a string in case backend populated it as an object
+      const raw = res.data.projects || [];
+      const normalizeProject = (pRaw: unknown) => {
+        const proj = pRaw as Record<string, unknown>;
+        const ownerRaw = proj.ownerId;
+        const ownerId = (ownerRaw && typeof ownerRaw === 'object' && '_id' in (ownerRaw as Record<string, unknown>))
+          ? String((ownerRaw as Record<string, unknown>)['_id'])
+          : String(ownerRaw || '');
+
+        const membersArr = Array.isArray(proj.members)
+          ? (proj.members as unknown[]).map((m: unknown) => {
+            if (m && typeof m === 'object' && '_id' in (m as Record<string, unknown>)) return String((m as Record<string, unknown>)['_id']);
+            if (typeof m === 'string') return m;
+            return String(m || '');
+          })
+          : [];
+
+        return {
+          ...(proj as Record<string, unknown>),
+          ownerId,
+          members: membersArr,
+        } as unknown as typeof raw[number];
+      };
+
+      const normalized = raw.map(normalizeProject);
+      setProjects(normalized);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       toast({ title: 'Failed to load projects', description: msg, status: 'error' });
@@ -59,7 +84,24 @@ function ProjectsList() {
   async function handleCreate() {
     try {
       const res = await projectsAPI.create({ name, description });
-      setProjects(p => [res.data.project, ...p]);
+      // Normalize project shape before inserting so ownerId/members are consistent
+      const created = res.data.project as unknown;
+      const normalized = (created && typeof created === 'object') ? ((() => {
+        const c = created as Record<string, unknown>;
+        const ownerRaw = c.ownerId;
+        const ownerId = (ownerRaw && typeof ownerRaw === 'object' && '_id' in (ownerRaw as Record<string, unknown>))
+          ? String((ownerRaw as Record<string, unknown>)['_id'])
+          : String(ownerRaw || '');
+        const membersArr = Array.isArray(c.members)
+          ? (c.members as unknown[]).map((m: unknown) => {
+            if (m && typeof m === 'object' && '_id' in (m as Record<string, unknown>)) return String((m as Record<string, unknown>)['_id']);
+            if (typeof m === 'string') return m;
+            return String(m || '');
+          })
+          : [];
+        return { ...(c as Record<string, unknown>), ownerId, members: membersArr } as unknown as Project;
+      })()) : (res.data.project as Project);
+      setProjects(p => [normalized, ...p]);
       setName('');
       setDescription('');
       toast({ title: 'Project created', status: 'success' });
@@ -154,10 +196,12 @@ function ProjectsList() {
                     <Text fontSize="sm" color="gray.500">{p.description}</Text>
                   </Box>
                   <Box textAlign="right">
-                    {p.ownerId === user?.id ? (
+                    {String(p.ownerId) === String(user?.id) ? (
                       <Badge colorScheme="purple">Owner</Badge>
-                    ) : (
+                    ) : p.members && p.members.includes(String(user?.id)) ? (
                       <Badge>Member</Badge>
+                    ) : (
+                      <Badge colorScheme="gray">Unknown Role</Badge>
                     )}
                     {p.joinCode && (
                       <Text fontSize="xs" color="gray.400">Join code: <strong>{p.joinCode}</strong></Text>

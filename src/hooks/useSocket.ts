@@ -37,21 +37,21 @@ export default function useSocket(projectId?: string, handlers?: Record<string, 
             const msg = typeof err === 'string' ? err : (err instanceof Error ? err.message : String(err));
             console.warn('[useSocket] connect_error', msg);
         });
-        s.on('disconnect', (reason: string) => {
+        s.on('disconnect', (...args: unknown[]) => {
             // eslint-disable-next-line no-console
-            console.debug('[useSocket] disconnected', reason);
+            console.debug('[useSocket] disconnected', ...args);
         });
 
-        if (!s.connected) s.connect();
+        if (!s.connected && typeof s.connect === 'function') s.connect();
 
         if (projectId) {
             s.emit('join', { projectId });
         }
 
         // ack join
-        s.on('socket:joined', (payload: Record<string, unknown>) => {
+        s.on('socket:joined', (...args: unknown[]) => {
             // eslint-disable-next-line no-console
-            console.debug('[useSocket] socket:joined', payload);
+            console.debug('[useSocket] socket:joined', ...args);
         });
 
         // register handlers

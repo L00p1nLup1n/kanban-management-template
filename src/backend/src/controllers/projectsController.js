@@ -1,4 +1,5 @@
 import Project from '../models/Project.js';
+import { getIO } from '../socket.js';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
@@ -15,7 +16,9 @@ export async function listProjects(req, res) {
         // Return projects owned by the user or where the user is a member
         const projects = await Project.find({
             $or: [ { ownerId: req.userId }, { members: req.userId } ]
-        });
+        })
+            .populate('ownerId', 'name email')
+            .populate('members', 'name email');
         return res.json({ projects });
     } catch (err) {
         console.error('List projects error:', err);
@@ -26,15 +29,17 @@ export async function listProjects(req, res) {
 export async function getProject(req, res) {
     try {
         const { projectId } = req.params;
-        const project = await Project.findById(projectId);
+        const project = await Project.findById(projectId)
+            .populate('ownerId', 'name email')
+            .populate('members', 'name email');
 
         if (!project) {
             return res.status(404).json({ error: 'Project not found' });
         }
 
         // Allow owner or members to view
-        const isOwner = project.ownerId.toString() === req.userId;
-        const isMember = project.members && project.members.some(m => m.toString() === req.userId);
+        const isOwner = project.ownerId._id.toString() === req.userId;
+        const isMember = project.members && project.members.some(m => m._id.toString() === req.userId);
         if (!isOwner && !isMember) {
             return res.status(403).json({ error: 'Forbidden' });
         }
@@ -102,6 +107,12 @@ export async function updateProject(req, res) {
         if (columns !== undefined) project.columns = columns;
 
         await project.save();
+        try {
+            const io = getIO();
+            if (io) io.to(String(project._id)).emit('project:columns-updated', { projectId: String(project._id), columns: project.columns });
+        } catch (e) {
+            console.warn('Socket emit error (updateProject):', e);
+        }
         return res.json({ project });
     } catch (err) {
         console.error('Update project error:', err);
@@ -146,12 +157,19 @@ export async function joinProjectByCode(req, res) {
 
         const alreadyMember = project.members && project.members.some(m => m.toString() === req.userId);
         if (alreadyMember) {
+            // Populate before returning
+            await project.populate('ownerId', 'name email');
+            await project.populate('members', 'name email');
             return res.status(200).json({ project, message: 'Already a member' });
         }
 
         project.members = project.members || [];
         project.members.push(req.userId);
         await project.save();
+
+        // Populate before returning
+        await project.populate('ownerId', 'name email');
+        await project.populate('members', 'name email');
 
         return res.json({ project, message: 'Joined project' });
     } catch (err) {

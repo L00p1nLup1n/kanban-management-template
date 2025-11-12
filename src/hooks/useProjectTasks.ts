@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { projectsAPI, tasksAPI, Column as APIColumn } from '../api/client';
+import { projectsAPI, tasksAPI, Column as APIColumn, PopulatedUser } from '../api/client';
 import useSocket from './useSocket';
 import { ColumnType } from '../utils/enums';
 import { TaskModel } from '../utils/models';
@@ -22,6 +22,11 @@ interface ServerTask {
     color?: string;
     order?: number;
     backlog?: boolean;
+    storyPoints?: number;
+    priority?: 'low' | 'medium' | 'high';
+    assigneeId?: string;
+    assignee?: PopulatedUser;
+    dueDate?: string;
 }
 
 function mapServerTaskToModel(t: ServerTask): TaskModel {
@@ -30,7 +35,13 @@ function mapServerTaskToModel(t: ServerTask): TaskModel {
         id: t._id,
         title: t.title,
         column: columnKey,
-        color: t.color || pickChakraRandomColor('.200') || '#F7FAFC',
+        // If server provided color, use it; otherwise derive deterministic color from task id
+        color: t.color || pickChakraRandomColor(t._id, '.200') || '#F7FAFC',
+        storyPoints: t.storyPoints,
+        priority: t.priority as TaskModel['priority'],
+        assigneeId: t.assigneeId,
+        assignee: t.assignee,
+        dueDate: t.dueDate,
     };
 }
 
@@ -41,6 +52,9 @@ export default function useProjectTasks(projectId: string) {
     );
     const [projectName, setProjectName] = useState<string | null>(null);
     const [projectColumns, setProjectColumns] = useState<ProjectColumn[]>([]);
+    const [projectOwnerId, setProjectOwnerId] = useState<string | PopulatedUser | null>(null);
+    const [projectMembers, setProjectMembers] = useState<(string | PopulatedUser)[]>([]);
+    const [joinCode, setJoinCode] = useState<string | undefined>(undefined);
 
     const load = useCallback(async () => {
         setLoading(true);
@@ -53,6 +67,9 @@ export default function useProjectTasks(projectId: string) {
 
             const project = pRes.data?.project;
             setProjectName(project?.name || null);
+            setProjectOwnerId(project?.ownerId || null);
+            setProjectMembers(project?.members || []);
+            setJoinCode(project?.joinCode);
             // Ensure backlog column is present as the first persistent column
             const serverCols: ProjectColumn[] = project?.columns || [];
             const backlogCol: ProjectColumn = { id: 'backlog', key: 'backlog', title: 'Backlog', order: -1 };
@@ -82,9 +99,21 @@ export default function useProjectTasks(projectId: string) {
                 if (!map[k]) map[k] = [];
             });
 
-            // sort by server order if present (we typed ServerTask.order above)
+            // sort tasks in each column by priority (high -> medium -> low)
+            // then tie-break by title for stable ordering
+            const priorityValue = (p?: TaskModel['priority']) => (p === 'high' ? 3 : p === 'medium' ? 2 : p === 'low' ? 1 : 0);
             (Object.keys(map) as Array<keyof ColumnsMap>).forEach((k) => {
-                map[k].sort((a, b) => 0); // no-op by default (server order not mapped into TaskModel)
+                map[k].sort((a, b) => {
+                    const pa = priorityValue(a.priority);
+                    const pb = priorityValue(b.priority);
+                    if (pa !== pb) return pb - pa; // higher priority first
+                    // tie-break: storyPoints (if present) descending
+                    const sa = a.storyPoints ?? 0;
+                    const sb = b.storyPoints ?? 0;
+                    if (sa !== sb) return sb - sa;
+                    // final tie-break: alphabetical by title
+                    return String(a.title || '').localeCompare(String(b.title || ''));
+                });
             });
 
             setColumns(map);
@@ -106,14 +135,18 @@ export default function useProjectTasks(projectId: string) {
         'task:moved': () => load(),
         'task:deleted': () => load(),
         'tasks:reordered': () => load(),
+        // project-level column changes (add/remove/reorder columns)
+        'project:columns-updated': () => load(),
     });
-    type CreateTaskPayload = { title: string; columnKey: string; order: number };
+    type CreateTaskPayload = { title: string; columnKey: string; order: number; storyPoints?: number; priority?: 'low' | 'medium' | 'high' };
 
-    const createTask = useCallback(async (data: { title?: string; column: string }) => {
+    const createTask = useCallback(async (data: { title?: string; column: string; storyPoints?: number; priority?: 'low' | 'medium' | 'high' }) => {
         const payload: CreateTaskPayload = {
             title: data.title || 'New task',
             columnKey: data.column,
             order: 1000,
+            storyPoints: data.storyPoints,
+            priority: data.priority,
         };
 
         try {
@@ -125,9 +158,9 @@ export default function useProjectTasks(projectId: string) {
         }
     }, [projectId, load]);
 
-    const createBacklogTask = useCallback(async (data: { title: string; description?: string }) => {
+    const createBacklogTask = useCallback(async (data: { title: string; description?: string; storyPoints?: number; priority?: 'low' | 'medium' | 'high' }) => {
         try {
-            await tasksAPI.createBacklog(projectId, { title: data.title, description: data.description });
+            await tasksAPI.createBacklog(projectId, { title: data.title, description: data.description, storyPoints: data.storyPoints, priority: data.priority });
             await load();
         } catch (err) {
             console.error('create backlog task', err);
@@ -135,7 +168,15 @@ export default function useProjectTasks(projectId: string) {
         }
     }, [projectId, load]);
 
-    type UpdateTaskPayload = { title?: string; columnKey?: string; color?: string };
+    type UpdateTaskPayload = { 
+        title?: string; 
+        columnKey?: string; 
+        color?: string; 
+        storyPoints?: number; 
+        priority?: 'low' | 'medium' | 'high';
+        assigneeId?: string;
+        dueDate?: string;
+    };
 
     const updateTask = useCallback(async (taskId: string, patch: Partial<TaskModel>) => {
         try {
@@ -143,6 +184,10 @@ export default function useProjectTasks(projectId: string) {
             if (patch.title !== undefined) data.title = patch.title;
             if (patch.column !== undefined) data.columnKey = patch.column;
             if (patch.color !== undefined) data.color = patch.color;
+            if (patch.storyPoints !== undefined) data.storyPoints = patch.storyPoints;
+            if (patch.priority !== undefined) data.priority = patch.priority;
+            if (patch.assigneeId !== undefined) data.assigneeId = patch.assigneeId || undefined;
+            if (patch.dueDate !== undefined) data.dueDate = patch.dueDate || undefined;
             await tasksAPI.update(projectId, taskId, data);
             await load();
         } catch (err) {
@@ -210,6 +255,9 @@ export default function useProjectTasks(projectId: string) {
         load,
         projectName,
         projectColumns,
+        projectOwnerId,
+        projectMembers,
+        joinCode,
         createTask,
         createBacklogTask,
         updateTask,

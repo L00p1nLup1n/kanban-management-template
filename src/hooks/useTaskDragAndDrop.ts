@@ -4,7 +4,7 @@ import { ItemType } from '../utils/enums';
 import { DragItem, TaskModel } from '../utils/models';
 
 export function useTaskDragAndDrop<T extends HTMLElement>(
-  { task, index }: { task: TaskModel; index: number },
+  { task, index, canDrag = true }: { task: TaskModel; index: number; canDrag?: boolean },
   handleDropHover: (i: number, j: number) => void,
 ) {
   const ref = useRef<T>(null);
@@ -16,6 +16,7 @@ export function useTaskDragAndDrop<T extends HTMLElement>(
   >({
     item: { from: task.column, id: task.id, index },
     type: ItemType.TASK,
+    canDrag,
     collect: (monitor) => ({
       isDragging: monitor.isDragging(),
     }),

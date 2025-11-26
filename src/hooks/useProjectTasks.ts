@@ -27,6 +27,8 @@ interface ServerTask {
     assigneeId?: string;
     assignee?: PopulatedUser;
     dueDate?: string;
+    startedAt?: string;
+    completedAt?: string;
 }
 
 function mapServerTaskToModel(t: ServerTask): TaskModel {
@@ -42,11 +44,14 @@ function mapServerTaskToModel(t: ServerTask): TaskModel {
         assigneeId: t.assigneeId,
         assignee: t.assignee,
         dueDate: t.dueDate,
+        startedAt: t.startedAt,
+        completedAt: t.completedAt,
     };
 }
 
 export default function useProjectTasks(projectId: string) {
     const [loading, setLoading] = useState(false);
+    const [error, setError] = useState<{ status?: number; message?: string } | null>(null);
     const [columns, setColumns] = useState<ColumnsMap>(
         Object.values(ColumnType).reduce((acc, k) => ({ ...acc, [k]: [] as TaskModel[] }), {} as ColumnsMap)
     );
@@ -58,6 +63,7 @@ export default function useProjectTasks(projectId: string) {
 
     const load = useCallback(async () => {
         setLoading(true);
+        setError(null);
         try {
             const [pRes, tRes, bRes] = await Promise.all([
                 projectsAPI.get(projectId),
@@ -117,8 +123,11 @@ export default function useProjectTasks(projectId: string) {
             });
 
             setColumns(map);
-        } catch (err) {
+        } catch (err: any) {
             console.error('load project tasks', err);
+            const status = err?.response?.status;
+            const message = err?.response?.data?.error || err?.message || 'Failed to load project';
+            setError({ status, message });
         } finally {
             setLoading(false);
         }
@@ -137,6 +146,10 @@ export default function useProjectTasks(projectId: string) {
         'tasks:reordered': () => load(),
         // project-level column changes (add/remove/reorder columns)
         'project:columns-updated': () => load(),
+        // member removed from project
+        'project:member-removed': () => load(),
+        // member joined project
+        'project:member-joined': () => load(),
     });
     type CreateTaskPayload = { title: string; columnKey: string; order: number; storyPoints?: number; priority?: 'low' | 'medium' | 'high' };
 
@@ -176,6 +189,8 @@ export default function useProjectTasks(projectId: string) {
         priority?: 'low' | 'medium' | 'high';
         assigneeId?: string;
         dueDate?: string;
+        startedAt?: string;
+        completedAt?: string;
     };
 
     const updateTask = useCallback(async (taskId: string, patch: Partial<TaskModel>) => {
@@ -188,6 +203,8 @@ export default function useProjectTasks(projectId: string) {
             if (patch.priority !== undefined) data.priority = patch.priority;
             if (patch.assigneeId !== undefined) data.assigneeId = patch.assigneeId || undefined;
             if (patch.dueDate !== undefined) data.dueDate = patch.dueDate || undefined;
+            if (patch.startedAt !== undefined) data.startedAt = patch.startedAt;
+            if (patch.completedAt !== undefined) data.completedAt = patch.completedAt;
             await tasksAPI.update(projectId, taskId, data);
             await load();
         } catch (err) {
@@ -252,6 +269,7 @@ export default function useProjectTasks(projectId: string) {
     return {
         columns,
         loading,
+        error,
         load,
         projectName,
         projectColumns,

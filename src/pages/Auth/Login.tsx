@@ -60,7 +60,7 @@ function Login() {
             fontSize="3xl"
             color={useColorModeValue('gray.700', 'white')}
           >
-            Welcome Back
+            Welcome
           </Heading>
 
           {localError && (

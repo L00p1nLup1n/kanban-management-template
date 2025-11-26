@@ -19,6 +19,9 @@ const TaskSchema = new Schema({
     priority: { type: String, enum: ['low', 'medium', 'high'], default: 'medium' },
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     backlog: { type: Boolean, default: false },
+    // Status timestamps
+    startedAt: { type: Date },
+    completedAt: { type: Date },
 }, { timestamps: true });
 
 // Indexes for efficient queries

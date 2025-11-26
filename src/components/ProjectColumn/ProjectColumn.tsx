@@ -13,6 +13,14 @@ import Task from '../Task/Task';
 import useColumnDrop from '../../hooks/useColumnDrop';
 import { TaskModel } from '../../utils/models';
 import { PopulatedUser } from '../../api/client';
+import { useAuth } from '../../hooks/useAuth';
+
+// Helper to get user ID from PopulatedUser or string
+function getUserId(userObj: string | PopulatedUser | null | undefined): string | null {
+    if (!userObj) return null;
+    if (typeof userObj === 'string') return userObj;
+    return userObj._id;
+}
 
 function ProjectColumn({
     column,
@@ -40,6 +48,13 @@ function ProjectColumn({
     projectOwnerId?: string | PopulatedUser | null;
 }) {
     const { dropRef, isOver } = useColumnDrop(column, onDropFrom);
+    const { user } = useAuth();
+    
+    // Color mode values - must be called unconditionally
+    const buttonColor = useColorModeValue('gray.800', 'gray.600');
+
+    // Check if current user is the project owner
+    const isOwner = user && projectOwnerId && getUserId(projectOwnerId) === user.id;
 
     const ColumnTasks = tasks.map((task, index) => (
         <Task
@@ -74,17 +89,20 @@ function ProjectColumn({
                         {title ?? column}
                     </Badge>
                 </Heading>
-                <IconButton
-                    size="sm"
-                    minW="44px"
-                    color={useColorModeValue('gray.800', 'gray.600')}
-                    rounded="xl"
-                    variant="solid"
-                    fontSize="lg"
-                    onClick={() => onCreate(column)}
-                    aria-label="add-task"
-                    icon={<AddIcon />}
-                />
+                {/* Only show create button to project owner */}
+                {isOwner && (
+                    <IconButton
+                        size="sm"
+                        minW="44px"
+                        color={buttonColor}
+                        rounded="xl"
+                        variant="solid"
+                        fontSize="lg"
+                        onClick={() => onCreate(column)}
+                        aria-label="add-task"
+                        icon={<AddIcon />}
+                    />
+                )}
             </Flex>
             <Stack
                 ref={dropRef}

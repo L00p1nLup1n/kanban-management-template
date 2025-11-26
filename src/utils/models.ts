@@ -14,6 +14,9 @@ export interface TaskModel {
   assignee?: PopulatedUser;
   // Due date
   dueDate?: string;
+  // Status timestamps
+  startedAt?: string;
+  completedAt?: string;
 }
 
 export interface DragItem {

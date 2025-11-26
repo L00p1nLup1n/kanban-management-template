@@ -24,13 +24,22 @@ import {
   FormLabel,
   Input,
   VStack,
+  Divider,
 } from '@chakra-ui/react';
-import { DeleteIcon, EditIcon, CalendarIcon, WarningIcon } from '@chakra-ui/icons';
+import { DeleteIcon, EditIcon, CalendarIcon, WarningIcon, CheckCircleIcon, TimeIcon } from '@chakra-ui/icons';
 import { AutoResizeTextArea } from '../AutoResizeTextArea/AutoResizeTextArea';
 import { useTaskDragAndDrop } from '../../hooks/useTaskDragAndDrop';
 import _ from 'lodash';
 import { TaskModel } from '../../utils/models';
 import { PopulatedUser } from '../../api/client';
+import { useAuth } from '../../hooks/useAuth';
+
+// Helper to get user ID from PopulatedUser or string
+function getUserId(userObj: string | PopulatedUser | null | undefined): string | null {
+  if (!userObj) return null;
+  if (typeof userObj === 'string') return userObj;
+  return userObj._id;
+}
 
 type TaskProps = {
   index: number;
@@ -51,9 +60,27 @@ function Task({
   projectMembers = [],
   projectOwnerId,
 }: TaskProps) {
-  const { ref, isDragging } = useTaskDragAndDrop<HTMLDivElement>({ task, index }, handleDropHover);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { isOpen: isStatusOpen, onOpen: onStatusOpen, onClose: onStatusClose } = useDisclosure();
   const toast = useToast();
+  const { user } = useAuth();
+
+  // Color mode values - must be called unconditionally
+  const popoverBg = useColorModeValue('brand.surfaceLight', 'brand.popoverBg');
+  const popoverBorder = useColorModeValue('rgba(2,6,23,0.06)', 'rgba(255,255,255,0.04)');
+  const popoverShadow = useColorModeValue('0 6px 18px rgba(2,6,23,0.08)', '0 8px 24px rgba(2,8,20,0.55)');
+  const textColor = useColorModeValue('gray.900', '#FFFFFF');
+
+
+  // Check if current user is the project owner
+  const isOwner = user && projectOwnerId && getUserId(projectOwnerId) === user.id;
+
+  // Check if current user can drag this task
+  // Only the assignee or project owner can drag the task
+  const isAssignee = !!(user && task.assigneeId && task.assigneeId === user.id);
+  const canDrag = !!(isOwner || isAssignee);
+
+  const { ref, isDragging } = useTaskDragAndDrop<HTMLDivElement>({ task, index, canDrag }, handleDropHover);
 
   // local editor state
   const [localTitle, setLocalTitle] = useState<string>(task.title);
@@ -83,6 +110,36 @@ function Task({
     onClose();
   };
 
+  const handleStartWork = () => {
+    handleUpdate(task.id, {
+      startedAt: new Date().toISOString(),
+    });
+    onStatusClose();
+    toast({
+      position: 'bottom-left',
+      render: () => (
+        <Box rounded="lg" color="white" p={2} bg="blue.500" textAlign="center">
+          Task marked as in work!
+        </Box>
+      ),
+    });
+  };
+
+  const handleMarkDone = () => {
+    handleUpdate(task.id, {
+      completedAt: new Date().toISOString(),
+    });
+    onStatusClose();
+    toast({
+      position: 'bottom-left',
+      render: () => (
+        <Box rounded="lg" color="white" p={2} bg="green.500" textAlign="center">
+          Task marked as done!
+        </Box>
+      ),
+    });
+  };
+
   const handleDeleteClick = () => {
     handleDelete(task.id);
     toast({
@@ -106,12 +163,7 @@ function Task({
     return userObj.name || userObj.email || `User ${userObj._id.slice(-6)}`;
   };
 
-  // Helper to get user ID
-  const getUserId = (userObj: string | PopulatedUser | null | undefined): string => {
-    if (!userObj) return '';
-    if (typeof userObj === 'string') return userObj;
-    return userObj._id;
-  };
+
 
   // Build list of all team members (owner + members)
   const allMembers: Array<{ id: string; display: string }> = [];
@@ -176,6 +228,48 @@ function Task({
   
   const dueDateDisplay = formatDueDate(task.dueDate);
 
+  // Format timestamp for display
+  const formatTimestamp = (dateString?: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric', 
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  // Compact format for card display
+  const formatTimestampCompact = (dateString?: string): string => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    // Less than 1 hour ago
+    if (diffMins < 60) {
+      return diffMins <= 1 ? 'just now' : `${diffMins}m ago`;
+    }
+    // Less than 24 hours ago
+    if (diffHours < 24) {
+      return `${diffHours}h ago`;
+    }
+    // Less than 7 days ago
+    if (diffDays < 7) {
+      return `${diffDays}d ago`;
+    }
+    // Otherwise show date
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric'
+    });
+  };
+
   return (
     <ScaleFade in unmountOnExit>
       <Box
@@ -190,11 +284,11 @@ function Task({
         pt={6}
         pb={1}
         boxShadow="xl"
-        cursor="grab"
+        cursor={canDrag ? "grab" : "not-allowed"}
         fontWeight="bold"
         userSelect="none"
         bgColor={task.color}
-        opacity={isDragging ? 0.5 : 1}
+        opacity={isDragging ? 0.5 : canDrag ? 1 : 0.6}
       >
         <HStack position="absolute" top={1} left={3} spacing={2} zIndex={0} maxW="calc(100% - 80px)">
           <Badge variant="purple" zIndex={0}>
@@ -233,19 +327,21 @@ function Task({
           zIndex={100}
           pointerEvents={isOpen ? 'none' : 'auto'}
         >
-          <Popover isOpen={isOpen} onOpen={onOpen} onClose={onClose} placement="left-end">
-            <PopoverTrigger>
-							<IconButton aria-label="edit-task" size="md" colorScheme="solid" color={'gray.700'} icon={<EditIcon />} opacity={0} _groupHover={{ opacity: 1 }} />
-            </PopoverTrigger>
+          {/* Only show edit button to project owner */}
+          {isOwner && (
+            <Popover isOpen={isOpen} onOpen={onOpen} onClose={onClose} placement="left-end">
+              <PopoverTrigger>
+                <IconButton aria-label="edit-task" size="md" colorScheme="solid" color={'gray.700'} icon={<EditIcon />} opacity={0} _groupHover={{ opacity: 1 }} />
+              </PopoverTrigger>
             <Portal>
               <PopoverContent
                 w={64}
                 p={2}
                 zIndex={99999}
-                bg={useColorModeValue('brand.surfaceLight', 'brand.popoverBg')}
+                bg={popoverBg}
                 border="1px solid"
-                borderColor={useColorModeValue('rgba(2,6,23,0.06)', 'rgba(255,255,255,0.04)')}
-                boxShadow={useColorModeValue('0 6px 18px rgba(2,6,23,0.08)', '0 8px 24px rgba(2,8,20,0.55)')}
+                borderColor={popoverBorder}
+                boxShadow={popoverShadow}
               >
                 <PopoverArrow />
                 <PopoverBody>
@@ -260,7 +356,7 @@ function Task({
                       minH={10}
                       maxH={60}
                       focusBorderColor="blue.300"
-                      color={useColorModeValue('gray.900', '#FFFFFF')}
+                      color={textColor}
                       lineHeight={1.5}
                       onChange={handleTitleChange}
                       placeholder="Task name"
@@ -290,7 +386,7 @@ function Task({
                     onChange={(e) => setLocalAssigneeId(e.target.value)}
                     placeholder="Unassigned"
                   >
-                    {allMembers.map(member => (
+                    {allMembers.filter(member => member.id !== getUserId(projectOwnerId)).map(member => (
                       <option key={member.id} value={member.id}>
                         {member.display}
                       </option>
@@ -312,8 +408,101 @@ function Task({
               </PopoverContent>
             </Portal>
           </Popover>
+          )}
 
-          <IconButton aria-label="delete-task" size="md" colorScheme="solid" color={'gray.700'} icon={<DeleteIcon />} opacity={0} _groupHover={{ opacity: 1 }} onClick={handleDeleteClick} />
+          {/* Status popover for non-owners (assignees) */}
+          {!isOwner && task.assigneeId && user && task.assigneeId === user.id && (
+            <Popover isOpen={isStatusOpen} onOpen={onStatusOpen} onClose={onStatusClose} placement="left-end">
+              <PopoverTrigger>
+                <IconButton 
+                  aria-label="update-status" 
+                  size="md" 
+                  colorScheme="solid" 
+                  color={'gray.700'} 
+                  icon={<TimeIcon />} 
+                  opacity={0} 
+                  _groupHover={{ opacity: 1 }} 
+                />
+              </PopoverTrigger>
+              <Portal>
+                <PopoverContent
+                  w={64}
+                  p={2}
+                  zIndex={99999}
+                  bg={popoverBg}
+                  border="1px solid"
+                  borderColor={popoverBorder}
+                  boxShadow={popoverShadow}
+                >
+                  <PopoverArrow />
+                  <PopoverBody>
+                    <VStack spacing={3} align="stretch">
+                      <Text fontWeight="semibold" fontSize="sm" color={textColor}>
+                        Update Task Status
+                      </Text>
+                      
+                      <Divider />
+                      
+                      {task.startedAt ? (
+                        <Box>
+                          <HStack spacing={2} mb={1}>
+                            <TimeIcon boxSize={3} color="blue.500" />
+                            <Text fontSize="xs" fontWeight="medium" color={textColor}>
+                              Started
+                            </Text>
+                          </HStack>
+                          <Text fontSize="xs" color="gray.500" ml={5}>
+                            {formatTimestamp(task.startedAt)}
+                          </Text>
+                        </Box>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          colorScheme="blue" 
+                          leftIcon={<TimeIcon />}
+                          onClick={handleStartWork}
+                        >
+                          Start Work
+                        </Button>
+                      )}
+                      
+                      {task.completedAt ? (
+                        <Box>
+                          <HStack spacing={2} mb={1}>
+                            <CheckCircleIcon boxSize={3} color="green.500" />
+                            <Text fontSize="xs" fontWeight="medium" color={textColor}>
+                              Completed
+                            </Text>
+                          </HStack>
+                          <Text fontSize="xs" color="gray.500" ml={5}>
+                            {formatTimestamp(task.completedAt)}
+                          </Text>
+                        </Box>
+                      ) : (
+                        <Button 
+                          size="sm" 
+                          colorScheme="green" 
+                          leftIcon={<CheckCircleIcon />}
+                          onClick={handleMarkDone}
+                          isDisabled={!task.startedAt}
+                        >
+                          Mark Done
+                        </Button>
+                      )}
+                    </VStack>
+                  </PopoverBody>
+                  <PopoverFooter display="flex" justifyContent="flex-end">
+                    <Button size="sm" variant="ghost" onClick={onStatusClose}>Close</Button>
+                  </PopoverFooter>
+                </PopoverContent>
+              </Portal>
+            </Popover>
+          )}
+
+          {/* Only show delete button to project owner */}
+          {isOwner && (
+            <IconButton aria-label="delete-task" size="md" colorScheme="solid" color={'gray.700'} icon={<DeleteIcon />} opacity={0} _groupHover={{ opacity: 1 }} onClick={handleDeleteClick} />
+          )}
         </Box>
 
         <Box as="div" fontWeight="semibold" cursor="inherit" p={0} minH={55} maxH={200} color="gray.900" lineHeight={1.5}>
@@ -328,6 +517,28 @@ function Task({
               {assigneeDisplay}
             </Text>
           </HStack>
+        )}
+
+        {/* Show timestamp badges if task has been started or completed */}
+        {(task.startedAt || task.completedAt) && (
+          <VStack spacing={1} align="stretch" mt={2} mb={2}>
+            {task.startedAt && (
+              <HStack spacing={1} alignItems="center">
+                <TimeIcon boxSize={2.5} color="blue.500" />
+                <Text fontSize="xs" fontWeight="normal" color="gray.700">
+                  Started {formatTimestampCompact(task.startedAt)}
+                </Text>
+              </HStack>
+            )}
+            {task.completedAt && (
+              <HStack spacing={1} alignItems="center">
+                <CheckCircleIcon boxSize={2.5} color="green.500" />
+                <Text fontSize="xs" fontWeight="normal" color="gray.700">
+                  Done {formatTimestampCompact(task.completedAt)}
+                </Text>
+              </HStack>
+            )}
+          </VStack>
         )}
       </Box>
     </ScaleFade>

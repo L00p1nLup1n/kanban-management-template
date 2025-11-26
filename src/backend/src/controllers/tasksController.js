@@ -7,6 +7,12 @@ function userHasProjectAccess(project, userId) {
     const isMember = Array.isArray(project.members) && project.members.some(m => String(m) === String(userId));
     return isOwner || isMember;
 }
+
+function userIsProjectOwner(project, userId) {
+    if (!project) return false;
+    return project.ownerId && project.ownerId.toString() === String(userId);
+}
+
 import { getIO } from '../socket.js';
 
 export async function listTasks(req, res) {
@@ -50,6 +56,11 @@ export async function createTask(req, res) {
         }
         if (!userHasProjectAccess(project, req.userId)) {
             return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // Only owner can create tasks
+        if (!userIsProjectOwner(project, req.userId)) {
+            return res.status(403).json({ error: 'Only the project owner can create tasks' });
         }
 
         const taskData = {
@@ -101,8 +112,34 @@ export async function updateTask(req, res) {
             return res.status(404).json({ error: 'Task not found' });
         }
 
-        // Update allowed fields
-    const allowedFields = ['title', 'description', 'color', 'columnKey', 'order', 'assigneeId', 'labels', 'estimate', 'storyPoints', 'priority', 'backlog', 'dueDate'];
+        const isOwner = userIsProjectOwner(project, req.userId);
+        const isAssignee = task.assigneeId && task.assigneeId.toString() === String(req.userId);
+
+        // Check if this is a status-only update (assignees can update these)
+        const statusOnlyFields = ['startedAt', 'completedAt'];
+        const updateKeys = Object.keys(updates);
+        const isStatusOnlyUpdate = updateKeys.length > 0 && updateKeys.every(key => statusOnlyFields.includes(key));
+
+        // If not owner, only allow status updates by assignees
+        if (!isOwner) {
+            if (!isAssignee) {
+                return res.status(403).json({ error: 'Only the project owner or task assignee can update this task' });
+            }
+            if (!isStatusOnlyUpdate) {
+                return res.status(403).json({ error: 'Task assignees can only update status timestamps (startedAt, completedAt)' });
+            }
+        }
+
+        // Update allowed fields based on user role
+        let allowedFields;
+        if (isOwner) {
+            allowedFields = ['title', 'description', 'color', 'columnKey', 'order', 'assigneeId', 'labels', 'estimate', 'storyPoints', 'priority', 'backlog', 'dueDate', 'startedAt', 'completedAt'];
+        } else if (isAssignee) {
+            allowedFields = ['startedAt', 'completedAt'];
+        } else {
+            return res.status(403).json({ error: 'Forbidden' });
+        }
+
         allowedFields.forEach(field => {
             if (updates[field] !== undefined) {
                 task[field] = updates[field];
@@ -160,6 +197,11 @@ export async function createBacklogTask(req, res) {
         }
         if (!userHasProjectAccess(project, req.userId)) {
             return res.status(403).json({ error: 'Forbidden' });
+        }
+
+        // Only owner can create backlog tasks
+        if (!userIsProjectOwner(project, req.userId)) {
+            return res.status(403).json({ error: 'Only the project owner can create tasks' });
         }
 
         const task = await Task.create({
@@ -274,6 +316,12 @@ export async function deleteTask(req, res) {
             return res.status(404).json({ error: 'Task not found' });
         }
 
+        // Only owner can delete tasks
+        if (!userIsProjectOwner(project, req.userId)) {
+            return res.status(403).json({ error: 'Only the project owner can delete tasks' });
+        }
+
+        await Task.deleteOne({ _id: taskId });
         await Task.findByIdAndDelete(taskId);
         try {
             const io = getIO();

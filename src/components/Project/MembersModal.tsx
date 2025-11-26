@@ -15,10 +15,19 @@ import {
     useClipboard,
     useToast,
     useColorModeValue,
+    IconButton,
+    AlertDialog,
+    AlertDialogBody,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogContent,
+    AlertDialogOverlay,
+    useDisclosure,
 } from '@chakra-ui/react';
-import { CopyIcon } from '@chakra-ui/icons';
+import { CopyIcon, CloseIcon } from '@chakra-ui/icons';
 import { useAuth } from '../../hooks/useAuth';
-import { PopulatedUser } from '../../api/client';
+import { PopulatedUser, projectsAPI } from '../../api/client';
+import { useState, useRef } from 'react';
 
 interface MembersModalProps {
     isOpen: boolean;
@@ -26,12 +35,18 @@ interface MembersModalProps {
     ownerId: string | PopulatedUser | null;
     members: (string | PopulatedUser)[];
     joinCode?: string;
+    projectId: string;
+    onMemberRemoved?: () => void;
 }
 
-export default function MembersModal({ isOpen, onClose, ownerId, members, joinCode }: MembersModalProps) {
+export default function MembersModal({ isOpen, onClose, ownerId, members, joinCode, projectId, onMemberRemoved }: MembersModalProps) {
     const { user } = useAuth();
     const { onCopy, hasCopied } = useClipboard(joinCode || '');
     const toast = useToast();
+    const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+    const { isOpen: isAlertOpen, onOpen: onAlertOpen, onClose: onAlertClose } = useDisclosure();
+    const cancelRef = useRef<HTMLButtonElement>(null);
+    const [memberToRemove, setMemberToRemove] = useState<{ id: string; name: string } | null>(null);
 
     // Color mode values
     const ownerBg = useColorModeValue('purple.50', 'purple.900');
@@ -59,6 +74,43 @@ export default function MembersModal({ isOpen, onClose, ownerId, members, joinCo
 
     const ownerId_str = getUserId(ownerId);
     const isOwnerCurrentUser = ownerId_str === user?.id;
+
+    const handleRemoveMemberClick = (member: string | PopulatedUser) => {
+        const memberId = getUserId(member);
+        const memberName = getDisplayName(member, false);
+        setMemberToRemove({ id: memberId, name: memberName });
+        onAlertOpen();
+    };
+
+    const handleConfirmRemove = async () => {
+        if (!memberToRemove) return;
+
+        setRemovingMemberId(memberToRemove.id);
+        try {
+            await projectsAPI.removeMember(projectId, memberToRemove.id);
+            toast({
+                title: 'Member removed',
+                description: `${memberToRemove.name} has been removed from the project`,
+                status: 'success',
+                duration: 3000,
+            });
+            onAlertClose();
+            if (onMemberRemoved) {
+                onMemberRemoved();
+            }
+        } catch (err: any) {
+            const errorMessage = err?.response?.data?.error || 'Failed to remove member';
+            toast({
+                title: 'Error',
+                description: errorMessage,
+                status: 'error',
+                duration: 5000,
+            });
+        } finally {
+            setRemovingMemberId(null);
+            setMemberToRemove(null);
+        }
+    };
 
     const handleCopyJoinCode = () => {
         onCopy();
@@ -111,7 +163,20 @@ export default function MembersModal({ isOpen, onClose, ownerId, members, joinCo
                                                 <Text>
                                                     {getDisplayName(member, isMemberCurrentUser)}
                                                 </Text>
-                                                <Badge>Member</Badge>
+                                                <HStack spacing={2}>
+                                                    <Badge>Member</Badge>
+                                                    {isOwnerCurrentUser && (
+                                                        <IconButton
+                                                            aria-label="Remove member"
+                                                            icon={<CloseIcon />}
+                                                            size="sm"
+                                                            colorScheme="red"
+                                                            variant="ghost"
+                                                            onClick={() => handleRemoveMemberClick(member)}
+                                                            isLoading={removingMemberId === memberId}
+                                                        />
+                                                    )}
+                                                </HStack>
                                             </HStack>
                                         );
                                     })
@@ -162,6 +227,40 @@ export default function MembersModal({ isOpen, onClose, ownerId, members, joinCo
                     </VStack>
                 </ModalBody>
             </ModalContent>
+
+            {/* Confirmation Alert Dialog */}
+            <AlertDialog
+                isOpen={isAlertOpen}
+                leastDestructiveRef={cancelRef}
+                onClose={onAlertClose}
+            >
+                <AlertDialogOverlay>
+                    <AlertDialogContent>
+                        <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                            Remove Member
+                        </AlertDialogHeader>
+
+                        <AlertDialogBody>
+                            Are you sure you want to remove <strong>{memberToRemove?.name}</strong> from this project? 
+                            They will lose access to all project tasks and data.
+                        </AlertDialogBody>
+
+                        <AlertDialogFooter>
+                            <Button ref={cancelRef} onClick={onAlertClose}>
+                                Cancel
+                            </Button>
+                            <Button 
+                                colorScheme="red" 
+                                onClick={handleConfirmRemove} 
+                                ml={3}
+                                isLoading={removingMemberId !== null}
+                            >
+                                Remove
+                            </Button>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialogOverlay>
+            </AlertDialog>
         </Modal>
     );
 }

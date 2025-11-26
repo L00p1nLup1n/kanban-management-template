@@ -9,6 +9,24 @@ export function initSocket(server, opts = {}) {
   io.on('connection', (socket) => {
     console.log('[socket] client connected', socket.id);
 
+    // allow clients to join user-specific rooms for global events
+    socket.on('join-user', ({ userId } = {}) => {
+      if (userId) {
+        const room = `user:${userId}`;
+        socket.join(room);
+        console.log(`[socket] ${socket.id} joined user room ${room}`);
+        socket.emit('socket:joined-user', { userId });
+      }
+    });
+
+    socket.on('leave-user', ({ userId } = {}) => {
+      if (userId) {
+        const room = `user:${userId}`;
+        socket.leave(room);
+        console.log(`[socket] ${socket.id} left user room ${room}`);
+      }
+    });
+
     // allow clients to join project rooms
     socket.on('join', ({ projectId } = {}) => {
       if (projectId) {

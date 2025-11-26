@@ -96,11 +96,14 @@ export interface Task {
     assigneeId?: string;
     labels?: string[];
     estimate?: number;
+    dueDate?: string;
     storyPoints?: number;
     priority?: 'low' | 'medium' | 'high';
     createdBy: string;
     createdAt: string;
     updatedAt: string;
+    startedAt?: string;
+    completedAt?: string;
 }
 
 // API methods
@@ -133,6 +136,9 @@ export const projectsAPI = {
 
     delete: (projectId: string) =>
         apiClient.delete(`/projects/${projectId}`),
+
+    removeMember: (projectId: string, memberId: string) =>
+        apiClient.delete<{ project: Project; message: string }>(`/projects/${projectId}/members/${memberId}`),
 };
 
 export const tasksAPI = {

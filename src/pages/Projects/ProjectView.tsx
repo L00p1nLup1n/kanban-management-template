@@ -7,9 +7,18 @@ import { TaskModel } from '../../utils/models';
 import { useEffect, useState } from 'react';
 import ColumnSettingsModal from '../../components/Project/ColumnSettingsModal';
 import MembersModal from '../../components/Project/MembersModal';
+import ProjectError from '../../components/Project/ProjectError';
 import { SettingsIcon, ArrowBackIcon, AtSignIcon } from '@chakra-ui/icons';
 import { useAuth } from '../../hooks/useAuth';
 import DarkModeIconButton from '../../components/DarkModeIconButton/DarkModeIconButton';
+import useSocket from '../../hooks/useSocket';
+
+// Helper to get user ID from PopulatedUser or string
+function getUserId(userObj: string | { _id: string } | null | undefined): string | null {
+    if (!userObj) return null;
+    if (typeof userObj === 'string') return userObj;
+    return userObj._id;
+}
 
 function UsernameDisplay() {
     const { user } = useAuth();
@@ -27,8 +36,10 @@ function BackButton() {
 
 export default function ProjectView() {
     const { projectId } = useParams<{ projectId: string }>();
+    const { user } = useAuth();
     const {
         loading,
+        error,
         columns,
         load,
         createTask,
@@ -50,11 +61,49 @@ export default function ProjectView() {
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isMembersOpen, setIsMembersOpen] = useState(false);
     
+    // Check if current user is the project owner
+    const isOwner = user && projectOwnerId && getUserId(projectOwnerId) === user.id;
+    
+    // Listen for member join/remove events and show notifications
+    useSocket(projectId, {
+        'project:member-joined': (data: any) => {
+            const memberName = data?.member?.name || data?.member?.email || 'A user';
+            toast({
+                title: 'New Member Joined',
+                description: `${memberName} has joined the project`,
+                status: 'info',
+                duration: 4000,
+                isClosable: true,
+                position: 'bottom-left',
+            });
+        },
+        'project:member-removed': (data: any) => {
+            // If the current user was removed, they'll see the error screen on next load
+            if (data?.memberId === user?.id) {
+                toast({
+                    title: 'Removed from Project',
+                    description: 'You have been removed from this project',
+                    status: 'warning',
+                    duration: 5000,
+                    isClosable: true,
+                    position: 'bottom-left',
+                });
+                // Reload to trigger error screen
+                setTimeout(() => load(), 2000);
+            }
+        },
+    });
+    
     useEffect(() => {
         setColsLocal(columns);
     }, [columns]);
 
     if (loading) return <Spinner />;
+    
+    // Show error screen if project failed to load
+    if (error) {
+        return <ProjectError status={error.status} message={error.message} />;
+    }
 
     const handleCreate = (column: string) => {
         // enforce WIP
@@ -66,13 +115,29 @@ export default function ProjectView() {
             return;
         }
         if (column === 'backlog') {
-            createBacklogTask({ title: 'New backlog item' });
+            createBacklogTask({ title: 'New backlog item' }).catch((err: any) => {
+                const errorMessage = err?.response?.data?.error || 'Failed to create task';
+                toast({ title: 'Error', description: errorMessage, status: 'error', duration: 5000, isClosable: true });
+            });
         } else {
-            createTask({ column, title: 'New task' });
+            createTask({ column, title: 'New task' }).catch((err: any) => {
+                const errorMessage = err?.response?.data?.error || 'Failed to create task';
+                toast({ title: 'Error', description: errorMessage, status: 'error', duration: 5000, isClosable: true });
+            });
         }
     };
-    const handleUpdate = (id: string, patch: Partial<TaskModel>) => updateTask(id, patch);
-    const handleDelete = (id: string) => deleteTask(id);
+    const handleUpdate = (id: string, patch: Partial<TaskModel>) => {
+        updateTask(id, patch).catch((err: any) => {
+            const errorMessage = err?.response?.data?.error || 'Failed to update task';
+            toast({ title: 'Error', description: errorMessage, status: 'error', duration: 5000, isClosable: true });
+        });
+    };
+    const handleDelete = (id: string) => {
+        deleteTask(id).catch((err: any) => {
+            const errorMessage = err?.response?.data?.error || 'Failed to delete task';
+            toast({ title: 'Error', description: errorMessage, status: 'error', duration: 5000, isClosable: true });
+        });
+    };
 
     // Reorder within a single column (optimistic + persist)
     const handleReorder = async (column: string, fromIndex: number, toIndex: number) => {
@@ -123,12 +188,15 @@ export default function ProjectView() {
                             <Badge ml={1}>{(projectMembers?.length || 0) + 1}</Badge>
                         </Button>
                         <DarkModeIconButton size="sm"/>
-                        <IconButton
-                            aria-label="settings"
-                            icon={<SettingsIcon />}
-                            size="sm"
-                            onClick={() => setIsSettingsOpen(true)}
-                        />
+                        {/* Only show settings button to project owner */}
+                        {isOwner && (
+                            <IconButton
+                                aria-label="settings"
+                                icon={<SettingsIcon />}
+                                size="sm"
+                                onClick={() => setIsSettingsOpen(true)}
+                            />
+                        )}
                     </HStack>
                 </Box>
             </Box>
@@ -159,20 +227,25 @@ export default function ProjectView() {
                 />
             ))}
             </Grid>
-            <ColumnSettingsModal
-                isOpen={isSettingsOpen}
-                onClose={() => setIsSettingsOpen(false)}
-                projectId={projectId || ''}
-                projectColumns={projectColumns}
-                saveProjectColumns={saveProjectColumns}
-                onSaved={() => { setIsSettingsOpen(false); }}
-            />
+            {/* Only render settings modal if user is owner */}
+            {isOwner && (
+                <ColumnSettingsModal
+                    isOpen={isSettingsOpen}
+                    onClose={() => setIsSettingsOpen(false)}
+                    projectId={projectId || ''}
+                    projectColumns={projectColumns}
+                    saveProjectColumns={saveProjectColumns}
+                    onSaved={() => { setIsSettingsOpen(false); }}
+                />
+            )}
             <MembersModal
                 isOpen={isMembersOpen}
                 onClose={() => setIsMembersOpen(false)}
                 ownerId={projectOwnerId}
                 members={projectMembers}
                 joinCode={joinCode}
+                projectId={projectId || ''}
+                onMemberRemoved={load}
             />
         </Box>
     );

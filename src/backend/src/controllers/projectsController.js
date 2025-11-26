@@ -97,9 +97,9 @@ export async function updateProject(req, res) {
             return res.status(404).json({ error: 'Project not found' });
         }
 
-        // Only owner can update project
+        // Only owner can update project (including column settings)
         if (project.ownerId.toString() !== req.userId) {
-            return res.status(403).json({ error: 'Forbidden' });
+            return res.status(403).json({ error: 'Only the project owner can modify project settings' });
         }
 
         if (name !== undefined) project.name = name;
@@ -171,9 +171,89 @@ export async function joinProjectByCode(req, res) {
         await project.populate('ownerId', 'name email');
         await project.populate('members', 'name email');
 
+        // Emit socket event to notify about new member
+        try {
+            const io = getIO();
+            if (io) {
+                const newMember = project.members.find(m => m._id.toString() === req.userId);
+                // Emit to project room for members currently viewing the project
+                io.to(String(project._id)).emit('project:member-joined', { 
+                    projectId: String(project._id), 
+                    memberId: req.userId,
+                    member: newMember 
+                });
+                
+                // Emit to user-specific room so their projects list updates
+                io.to(`user:${req.userId}`).emit('user:joined-project', {
+                    project: project,
+                    projectId: String(project._id),
+                    projectName: project.name
+                });
+            }
+        } catch (e) {
+            console.warn('Socket emit error (joinProjectByCode):', e);
+        }
+
         return res.json({ project, message: 'Joined project' });
     } catch (err) {
         console.error('Join project error:', err);
+        return res.status(500).json({ error: 'Internal server error' });
+    }
+}
+
+export async function removeMember(req, res) {
+    try {
+        const { projectId, memberId } = req.params;
+
+        const project = await Project.findById(projectId);
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' });
+        }
+
+        // Only owner can remove members
+        if (project.ownerId.toString() !== req.userId) {
+            return res.status(403).json({ error: 'Only the project owner can remove members' });
+        }
+
+        // Owner cannot remove themselves
+        if (memberId === req.userId) {
+            return res.status(400).json({ error: 'Owner cannot be removed from the project' });
+        }
+
+        // Check if the user is actually a member
+        const memberIndex = project.members.findIndex(m => m.toString() === memberId);
+        if (memberIndex === -1) {
+            return res.status(404).json({ error: 'Member not found in this project' });
+        }
+
+        // Remove the member
+        project.members.splice(memberIndex, 1);
+        await project.save();
+
+        // Populate before returning
+        await project.populate('ownerId', 'name email');
+        await project.populate('members', 'name email');
+
+        // Emit socket event to notify about member removal
+        try {
+            const io = getIO();
+            if (io) {
+                // Emit to project room for members currently viewing the project
+                io.to(String(project._id)).emit('project:member-removed', { projectId: String(project._id), memberId });
+                
+                // Emit to user-specific room so removed user sees it on projects list page
+                io.to(`user:${memberId}`).emit('user:removed-from-project', { 
+                    projectId: String(project._id), 
+                    projectName: project.name 
+                });
+            }
+        } catch (e) {
+            console.warn('Socket emit error (removeMember):', e);
+        }
+
+        return res.json({ project, message: 'Member removed successfully' });
+    } catch (err) {
+        console.error('Remove member error:', err);
         return res.status(500).json({ error: 'Internal server error' });
     }
 }

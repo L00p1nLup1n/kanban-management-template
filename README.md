@@ -90,8 +90,6 @@ npm run test-connection  # Test MongoDB connection
 npm run test-api         # Test all API endpoints
 ```
 
-See [src/backend/INITIALIZATION.md](src/backend/INITIALIZATION.md) for full details, API documentation, and test examples.
-
 Note: The frontend code remains under `src/` and a separate Vite entry `src/frontend/main.tsx` was added to make the separation explicit. The main `index.html` now loads `/src/frontend/main.tsx`.
 
 - Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`

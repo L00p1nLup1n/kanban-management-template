@@ -15,6 +15,7 @@ import {
     IconButton,
     VStack,
     Text,
+    useToast,
 } from '@chakra-ui/react';
 import { AddIcon, ArrowUpIcon, ArrowDownIcon, DeleteIcon } from '@chakra-ui/icons';
 import { ProjectColumn as ProjectColumnMeta } from '../../hooks/useProjectTasks';
@@ -30,6 +31,7 @@ interface Props {
 
 export default function ColumnSettingsModal({ isOpen, onClose, projectColumns, saveProjectColumns, onSaved }: Props) {
     const [cols, setCols] = useState<ProjectColumnMeta[]>(projectColumns || []);
+    const toast = useToast();
     useEffect(() => setCols(projectColumns || []), [projectColumns]);
 
     const addColumn = () => {
@@ -64,10 +66,22 @@ export default function ColumnSettingsModal({ isOpen, onClose, projectColumns, s
     };
 
     const handleSave = async () => {
-        // ensure order indexes
-        const mapped = cols.map((c, idx) => ({ ...c, order: idx }));
-        await saveProjectColumns(mapped);
-        if (onSaved) onSaved();
+        try {
+            // ensure order indexes
+            const mapped = cols.map((c, idx) => ({ ...c, order: idx }));
+            await saveProjectColumns(mapped);
+            if (onSaved) onSaved();
+        } catch (err: any) {
+            // Check if it's a permission error
+            const errorMessage = err?.response?.data?.error || err?.message || 'Failed to save column settings';
+            toast({
+                title: 'Error',
+                description: errorMessage,
+                status: 'error',
+                duration: 5000,
+                isClosable: true,
+            });
+        }
     };
 
     return (

@@ -256,7 +256,7 @@ export default function useProjectTasks(projectId: string) {
                 key: c.key,
                 title: c.title,
                 order: c.order || idx,
-                // preserve wip if present on APIColumn? APIColumn currently doesn't include wip
+                wip: c.wip
             }));
             await projectsAPI.update(projectId, { columns: mapped });
             await load();

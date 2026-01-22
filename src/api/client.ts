@@ -83,6 +83,7 @@ export interface Column {
     key: string;
     title: string;
     order: number;
+    wip?: number;
 }
 
 export interface Task {

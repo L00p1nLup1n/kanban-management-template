@@ -6,7 +6,8 @@ import {
     Heading,
     IconButton,
     Stack,
-    useColorModeValue
+    useColorModeValue,
+    Progress
 } from '@chakra-ui/react';
 import { AddIcon } from '@chakra-ui/icons';
 import Task from '../Task/Task';
@@ -33,6 +34,7 @@ function ProjectColumn({
     onReorder,
     projectMembers,
     projectOwnerId,
+    wipLimit
 }: {
     // internal column key
     column: string;
@@ -46,15 +48,22 @@ function ProjectColumn({
     onReorder?: (fromIndex: number, toIndex: number) => void;
     projectMembers?: (string | PopulatedUser)[];
     projectOwnerId?: string | PopulatedUser | null;
+    wipLimit?: number;
 }) {
     const { dropRef, isOver } = useColumnDrop(column, onDropFrom);
     const { user } = useAuth();
-    
+
     // Color mode values - must be called unconditionally
     const buttonColor = useColorModeValue('gray.800', 'gray.600');
 
     // Check if current user is the project owner
     const isOwner = user && projectOwnerId && getUserId(projectOwnerId) === user.id;
+
+    const currentCount = tasks.length;
+    const isWipExceed = wipLimit !== undefined && wipLimit > 0 && currentCount > wipLimit;
+    const isWipNearLimit = wipLimit !== undefined && wipLimit > 0 && currentCount === wipLimit;
+    const showWipIndicator = wipLimit !== undefined && wipLimit > 0;
+    const wipBadgeColor = isWipExceed ? 'red' : isWipNearLimit ? 'yellow' : 'gray';
 
     const ColumnTasks = tasks.map((task, index) => (
         <Task
@@ -85,9 +94,14 @@ function ProjectColumn({
                         overflow="hidden"
                         whiteSpace="nowrap"
                         textOverflow="ellipsis"
+                        colorScheme={showWipIndicator ? wipBadgeColor : undefined}
                     >
                         {title ?? column}
+                        {" "}
+                        {showWipIndicator && `(${currentCount}/${wipLimit})`}
                     </Badge>
+
+
                 </Heading>
                 {/* Only show create button to project owner */}
                 {isOwner && (

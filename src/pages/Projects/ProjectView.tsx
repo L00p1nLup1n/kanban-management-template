@@ -202,11 +202,12 @@ export default function ProjectView() {
             </Box>
             {/* Use auto-fit with minmax so columns resize automatically to fit available width */}
             <Grid templateColumns={{ base: '1fr', md: "repeat(auto-fit, minmax(260px, 1fr))" }} gap={4}>
-            {(projectColumns && projectColumns.length > 0 ? projectColumns.map((c) => c) : Object.values(ColumnType).map((k) => ({ key: k, title: k }))).map((colMeta) => (
+            {(projectColumns && projectColumns.length > 0 ? projectColumns.map((c) => c) : Object.values(ColumnType).map((k) => ({ key: k, title: k, wip: undefined }))).map((colMeta) => (
                 <ProjectColumn
                     key={colMeta.key}
                     column={colMeta.key}
                     title={colMeta.title}
+                    wipLimit={colMeta.wip}
                     tasks={colsLocal[colMeta.key] || []}
                     onCreate={handleCreate}
                     onUpdate={handleUpdate}

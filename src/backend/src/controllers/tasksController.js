@@ -1,21 +1,6 @@
 import Task from '../models/Task.js';
 import Project from '../models/Project.js';
-
-function userHasProjectAccess(project, userId) {
-  if (!project) return false;
-  const isOwner =
-    project.ownerId && project.ownerId.toString() === String(userId);
-  const isMember =
-    Array.isArray(project.members) &&
-    project.members.some((m) => String(m) === String(userId));
-  return isOwner || isMember;
-}
-
-function userIsProjectOwner(project, userId) {
-  if (!project) return false;
-  return project.ownerId && project.ownerId.toString() === String(userId);
-}
-
+import { userHasProjectAccess, userIsProjectOwner} from '../utils/authHelpers.js'
 import { getIO } from '../socket.js';
 
 export async function listTasks(req, res) {

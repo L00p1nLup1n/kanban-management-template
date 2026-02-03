@@ -4,6 +4,7 @@ const { Schema } = mongoose;
 
 const TaskSchema = new Schema({
     projectId: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
+    sprintId: { type: Schema.Types.ObjectId, ref: 'Sprint'},
     // columnKey may be undefined for backlog tasks
     columnKey: { type: String },
     title: { type: String},
@@ -25,6 +26,7 @@ const TaskSchema = new Schema({
 }, { timestamps: true });
 
 // Indexes for efficient queries
+TaskSchema.index({ projectId: 1, sprintId: 1, order: 1 });
 TaskSchema.index({ projectId: 1, columnKey: 1, order: 1 });
 
 export default mongoose.model('Task', TaskSchema);

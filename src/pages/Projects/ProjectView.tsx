@@ -114,12 +114,7 @@ export default function ProjectView() {
             toast({ title: 'WIP limit reached', description: `Cannot add task to ${column} (WIP ${wip})`, status: 'warning' });
             return;
         }
-        if (column === 'backlog') {
-            createBacklogTask({ title: 'New backlog item' }).catch((err: any) => {
-                const errorMessage = err?.response?.data?.error || 'Failed to create task';
-                toast({ title: 'Error', description: errorMessage, status: 'error', duration: 5000, isClosable: true });
-            });
-        } else {
+        else {
             createTask({ column, title: 'New task' }).catch((err: any) => {
                 const errorMessage = err?.response?.data?.error || 'Failed to create task';
                 toast({ title: 'Error', description: errorMessage, status: 'error', duration: 5000, isClosable: true });

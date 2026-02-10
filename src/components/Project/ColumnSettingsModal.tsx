@@ -92,28 +92,24 @@ export default function ColumnSettingsModal({ isOpen, onClose, projectColumns, s
                 <ModalBody>
                     <VStack align="stretch">
                         {cols.map((c, idx) => {
-                            const isBacklog = c.key === 'backlog';
                             return (
                                 <Box key={c.key} p={2} borderWidth={1} borderRadius="md">
                                     <HStack>
                                         <Input
                                             value={c.title}
                                             onChange={(e) => updateCol(idx, { title: e.target.value })}
-                                            readOnly={isBacklog}
                                         />
                                         <NumberInput
                                             value={c.wip ?? 0}
                                             min={0}
                                             onChange={(_, val) => updateCol(idx, { wip: val === 0 ? undefined : Number(val) })}
-                                            isDisabled={isBacklog}
                                         >
                                             <NumberInputField />
                                         </NumberInput>
-                                        <IconButton aria-label="up" icon={<ArrowUpIcon />} size="sm" onClick={() => moveUp(idx)} isDisabled={isBacklog || idx === 0} />
-                                        <IconButton aria-label="down" icon={<ArrowDownIcon />} size="sm" onClick={() => moveDown(idx)} isDisabled={isBacklog || idx === cols.length - 1} />
-                                        <IconButton aria-label="remove" icon={<DeleteIcon />} size="sm" onClick={() => removeCol(idx)} isDisabled={isBacklog} />
+                                        <IconButton aria-label="up" icon={<ArrowUpIcon />} size="sm" onClick={() => moveUp(idx)} isDisabled={idx === 0} />
+                                        <IconButton aria-label="down" icon={<ArrowDownIcon />} size="sm" onClick={() => moveDown(idx)} isDisabled={idx === cols.length - 1} />
+                                        <IconButton aria-label="remove" icon={<DeleteIcon />} size="sm" onClick={() => removeCol(idx)} />
                                     </HStack>
-                                    <Text fontSize="sm" color="gray.500">{isBacklog ? 'Backlog cannot be modified' : ''}</Text>
                                 </Box>
                             );
                         })}

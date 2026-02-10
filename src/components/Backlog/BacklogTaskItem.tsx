@@ -9,6 +9,17 @@ import {
   useColorModeValue,
   Avatar,
   Tooltip,
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+  PopoverArrow,
+  PopoverBody,
+  PopoverFooter,
+  Button,
+  FormLabel,
+  Select,
+  NumberInput,
+  NumberInputField,
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import {
@@ -17,6 +28,7 @@ import {
   EditIcon,
   CheckIcon,
   CloseIcon,
+  SettingsIcon,
 } from '@chakra-ui/icons';
 import { BacklogTaskModel } from '../../hooks/useBacklog';
 
@@ -44,8 +56,19 @@ export default function BacklogTaskItem({
   const [isEditing, setIsEditing] = useState(false);
   const [editTitle, setEditTitle] = useState(task.title);
 
+  // Settings popover state
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [localStoryPoints, setLocalStoryPoints] = useState<number>(
+    task.storyPoints ?? 0,
+  );
+  const [localPriority, setLocalPriority] = useState<
+    BacklogTaskModel['priority']
+  >(task.priority ?? 'medium');
+
   const bgColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
+  const popoverBg = useColorModeValue('brand.surfaceLight', 'brand.popoverBg');
+  
 
   const handleSave = () => {
     if (editTitle.trim() && editTitle !== task.title) {
@@ -57,6 +80,28 @@ export default function BacklogTaskItem({
   const handleCancel = () => {
     setEditTitle(task.title);
     setIsEditing(false);
+  };
+
+  const handleSettingsSave = () => {
+    const updates: Partial<BacklogTaskModel> = {};
+
+    if (localStoryPoints !== (task.storyPoints ?? 0)) {
+      updates.storyPoints = localStoryPoints;
+    }
+    if (localPriority !== (task.priority ?? 'medium')) {
+      updates.priority = localPriority;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      onUpdate(updates);
+    }
+    setIsSettingsOpen(false);
+  };
+
+  const handleSettingsCancel = () => {
+    setLocalStoryPoints(task.storyPoints ?? 0);
+    setLocalPriority(task.priority ?? 'medium');
+    setIsSettingsOpen(false);
   };
 
   const formatDate = (dateString: string) => {
@@ -168,6 +213,73 @@ export default function BacklogTaskItem({
                 mr={2}
               />
             </Tooltip>
+          )}
+
+          {isOwner && (
+            <Popover
+              isOpen={isSettingsOpen}
+              onOpen={() => setIsSettingsOpen(true)}
+              onClose={() => setIsSettingsOpen(false)}
+              placement="left"
+            >
+              <PopoverTrigger>
+                <IconButton
+                  aria-label="Settings"
+                  icon={<SettingsIcon />}
+                  size="sm"
+                  colorScheme="gray"
+                  variant="ghost"
+                />
+              </PopoverTrigger>
+              <PopoverContent w={64} p={2} bg={popoverBg}>
+                <PopoverArrow />
+                <PopoverBody>
+                  <FormLabel fontSize="sm" mb={1}>
+                    Story Points
+                  </FormLabel>
+                  <NumberInput
+                    value={localStoryPoints}
+                    min={0}
+                    onChange={(_, v) => setLocalStoryPoints(v)}
+                    mb={2}
+                  >
+                    <NumberInputField />
+                  </NumberInput>
+
+                  <FormLabel fontSize="sm" mb={1}>
+                    Priority
+                  </FormLabel>
+                  <Select
+                    value={localPriority}
+                    onChange={(e) =>
+                      setLocalPriority(
+                        e.target.value as BacklogTaskModel['priority'],
+                      )
+                    }
+                  >
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                  </Select>
+                </PopoverBody>
+                <PopoverFooter display="flex" gap={2}>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={handleSettingsCancel}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    colorScheme="blue"
+                    onClick={handleSettingsSave}
+                  >
+                    Save
+                  </Button>
+                </PopoverFooter>
+              </PopoverContent>
+            </Popover>
           )}
 
           <Tooltip label="Move to board">

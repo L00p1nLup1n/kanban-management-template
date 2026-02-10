@@ -18,8 +18,6 @@ import {
   Button,
   FormLabel,
   Select,
-  NumberInput,
-  NumberInputField,
 } from '@chakra-ui/react';
 import { useState } from 'react';
 import {
@@ -58,9 +56,6 @@ export default function BacklogTaskItem({
 
   // Settings popover state
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [localStoryPoints, setLocalStoryPoints] = useState<number>(
-    task.storyPoints ?? 0,
-  );
   const [localPriority, setLocalPriority] = useState<
     BacklogTaskModel['priority']
   >(task.priority ?? 'medium');
@@ -68,7 +63,6 @@ export default function BacklogTaskItem({
   const bgColor = useColorModeValue('white', 'gray.700');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const popoverBg = useColorModeValue('brand.surfaceLight', 'brand.popoverBg');
-  
 
   const handleSave = () => {
     if (editTitle.trim() && editTitle !== task.title) {
@@ -85,9 +79,6 @@ export default function BacklogTaskItem({
   const handleSettingsSave = () => {
     const updates: Partial<BacklogTaskModel> = {};
 
-    if (localStoryPoints !== (task.storyPoints ?? 0)) {
-      updates.storyPoints = localStoryPoints;
-    }
     if (localPriority !== (task.priority ?? 'medium')) {
       updates.priority = localPriority;
     }
@@ -99,7 +90,6 @@ export default function BacklogTaskItem({
   };
 
   const handleSettingsCancel = () => {
-    setLocalStoryPoints(task.storyPoints ?? 0);
     setLocalPriority(task.priority ?? 'medium');
     setIsSettingsOpen(false);
   };
@@ -180,12 +170,6 @@ export default function BacklogTaskItem({
               </Badge>
             )}
 
-            {task.storyPoints !== undefined && task.storyPoints > 0 && (
-              <Badge variant="outline" colorScheme="blue">
-                {task.storyPoints} SP
-              </Badge>
-            )}
-
             <Text fontSize="xs" color="gray.500">
               Created {formatDate(task.createdAt)}
             </Text>
@@ -203,9 +187,8 @@ export default function BacklogTaskItem({
         <HStack spacing={1}>
           {task.assignee && (
             <Tooltip
-              label={`Assigned to: ${
-                task.assignee.name || task.assignee.email
-              }`}
+              label={`Assigned to: ${task.assignee.name || task.assignee.email
+                }`}
             >
               <Avatar
                 size="sm"
@@ -231,21 +214,14 @@ export default function BacklogTaskItem({
                   variant="ghost"
                 />
               </PopoverTrigger>
-              <PopoverContent w={64} p={2} bg={popoverBg}>
+              <PopoverContent
+                w={64}
+                p={2}
+                bg={popoverBg}
+                borderRadius={10}
+              >
                 <PopoverArrow />
                 <PopoverBody>
-                  <FormLabel fontSize="sm" mb={1}>
-                    Story Points
-                  </FormLabel>
-                  <NumberInput
-                    value={localStoryPoints}
-                    min={0}
-                    onChange={(_, v) => setLocalStoryPoints(v)}
-                    mb={2}
-                  >
-                    <NumberInputField />
-                  </NumberInput>
-
                   <FormLabel fontSize="sm" mb={1}>
                     Priority
                   </FormLabel>

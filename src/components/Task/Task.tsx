@@ -13,8 +13,6 @@ import {
   PopoverBody,
   PopoverFooter,
   Button,
-  NumberInput,
-  NumberInputField,
   Select,
   HStack,
   useDisclosure,
@@ -109,7 +107,6 @@ function Task({
 
   // local editor state
   const [localTitle, setLocalTitle] = useState<string>(task.title);
-  const [localSP, setLocalSP] = useState<number>(task.storyPoints ?? 0);
   const [localPriority, setLocalPriority] = useState<TaskModel['priority']>(
     task.priority ?? 'medium',
   );
@@ -122,24 +119,16 @@ function Task({
 
   useEffect(() => {
     setLocalTitle(task.title);
-    setLocalSP(task.storyPoints ?? 0);
     setLocalPriority(task.priority ?? 'medium');
     setLocalAssigneeId(task.assigneeId || '');
     setLocalDueDate(
       task.dueDate ? new Date(task.dueDate).toISOString().split('T')[0] : '',
     );
-  }, [
-    task.title,
-    task.storyPoints,
-    task.priority,
-    task.assigneeId,
-    task.dueDate,
-  ]);
+  }, [task.title, task.priority, task.assigneeId, task.dueDate]);
 
   const handleSaveAll = () => {
     handleUpdate(task.id, {
       title: localTitle,
-      storyPoints: Number(localSP),
       priority: localPriority,
       assigneeId: localAssigneeId || undefined,
       dueDate: localDueDate ? new Date(localDueDate).toISOString() : undefined,
@@ -362,9 +351,6 @@ function Task({
           zIndex={0}
           maxW="calc(100% - 80px)"
         >
-          <Badge variant="purple" zIndex={0}>
-            {task.storyPoints ?? 0} SP
-          </Badge>
           <Badge
             zIndex={0}
             variant={
@@ -434,6 +420,7 @@ function Task({
                   zIndex={99999}
                   bg={popoverBg}
                   border="1px solid"
+                  borderRadius={10}
                   borderColor={popoverBorder}
                   boxShadow={popoverShadow}
                 >
@@ -456,18 +443,6 @@ function Task({
                         placeholder="Task name"
                       />
                     </Box>
-
-                    <FormLabel fontSize="sm" mb={1}>
-                      Story Points
-                    </FormLabel>
-                    <NumberInput
-                      value={localSP}
-                      min={0}
-                      onChange={(_, v) => setLocalSP(v)}
-                      mb={2}
-                    >
-                      <NumberInputField />
-                    </NumberInput>
 
                     <FormLabel fontSize="sm" mb={1}>
                       Priority

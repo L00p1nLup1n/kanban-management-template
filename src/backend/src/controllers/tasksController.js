@@ -1,6 +1,9 @@
 import Task from '../models/Task.js';
 import Project from '../models/Project.js';
-import { userHasProjectAccess, userIsProjectOwner} from '../utils/authHelpers.js'
+import {
+  userHasProjectAccess,
+  userIsProjectOwner,
+} from '../utils/authHelpers.js';
 import { getIO } from '../socket.js';
 
 export async function listTasks(req, res) {
@@ -38,7 +41,6 @@ export async function createTask(req, res) {
       color,
       labels,
       estimate,
-      storyPoints,
       priority,
     } = req.body;
 
@@ -100,7 +102,6 @@ export async function createTask(req, res) {
       color,
       labels,
       estimate,
-      storyPoints,
       priority,
       createdBy: req.userId,
     };
@@ -205,7 +206,6 @@ export async function updateTask(req, res) {
         'assigneeId',
         'labels',
         'estimate',
-        'storyPoints',
         'priority',
         'backlog',
         'dueDate',
@@ -264,15 +264,7 @@ export async function getBacklog(req, res) {
 export async function createBacklogTask(req, res) {
   try {
     const { projectId } = req.params;
-    const {
-      title,
-      description,
-      color,
-      labels,
-      estimate,
-      storyPoints,
-      priority,
-    } = req.body;
+    const { title, description, color, labels, estimate, priority } = req.body;
 
     if (!title) {
       return res.status(400).json({ error: 'title is required' });
@@ -301,7 +293,6 @@ export async function createBacklogTask(req, res) {
       color,
       labels,
       estimate,
-      storyPoints,
       priority,
       order: Date.now(), // give a stable order value for backlog
       createdBy: req.userId,

@@ -7,7 +7,6 @@ interface BacklogTask {
   title: string;
   description?: string;
   color?: string;
-  storyPoints?: number;
   priority?: 'low' | 'medium' | 'high';
   assigneeId?: string;
   assignee?: PopulatedUser;
@@ -21,7 +20,6 @@ export interface BacklogTaskModel {
   title: string;
   description?: string;
   color: string;
-  storyPoints?: number;
   priority?: 'low' | 'medium' | 'high';
   assigneeId?: string;
   assignee?: PopulatedUser;
@@ -35,7 +33,6 @@ function mapServerTaskToModel(t: BacklogTask): BacklogTaskModel {
     title: t.title,
     description: t.description,
     color: t.color || '#F7FAFC',
-    storyPoints: t.storyPoints,
     priority: t.priority as BacklogTaskModel['priority'],
     assigneeId: t.assigneeId,
     assignee: t.assignee,
@@ -81,7 +78,6 @@ export default function useBacklog(projectId: string) {
     async (data: {
       title: string;
       description?: string;
-      storyPoints?: number;
       priority?: 'low' | 'medium' | 'high';
     }) => {
       try {
@@ -103,8 +99,6 @@ export default function useBacklog(projectId: string) {
         if (patch.description !== undefined)
           data.description = patch.description;
         if (patch.color !== undefined) data.color = patch.color;
-        if (patch.storyPoints !== undefined)
-          data.storyPoints = patch.storyPoints;
         if (patch.priority !== undefined) data.priority = patch.priority;
         if (patch.assigneeId !== undefined)
           data.assigneeId = patch.assigneeId || undefined;

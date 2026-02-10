@@ -7,7 +7,6 @@ export interface TaskModel {
   column: string;
   color: string;
   // Scrumban fields
-  storyPoints?: number;
   priority?: 'low' | 'medium' | 'high';
   // Task assignment
   assigneeId?: string;

@@ -27,7 +27,6 @@ interface ServerTask {
   color?: string;
   order?: number;
   backlog?: boolean;
-  storyPoints?: number;
   priority?: 'low' | 'medium' | 'high';
   assigneeId?: string;
   assignee?: PopulatedUser;
@@ -44,7 +43,6 @@ function mapServerTaskToModel(t: ServerTask): TaskModel {
     column: columnKey,
     // If server provided color, use it; otherwise derive deterministic color from task id
     color: t.color || pickChakraRandomColor(t._id, '.200') || '#F7FAFC',
-    storyPoints: t.storyPoints,
     priority: t.priority as TaskModel['priority'],
     assigneeId: t.assigneeId,
     assignee: t.assignee,
@@ -119,10 +117,6 @@ export default function useProjectTasks(projectId: string) {
           const pa = priorityValue(a.priority);
           const pb = priorityValue(b.priority);
           if (pa !== pb) return pb - pa; // higher priority first
-          // tie-break: storyPoints (if present) descending
-          const sa = a.storyPoints ?? 0;
-          const sb = b.storyPoints ?? 0;
-          if (sa !== sb) return sb - sa;
           // final tie-break: alphabetical by title
           return String(a.title || '').localeCompare(String(b.title || ''));
         });
@@ -162,7 +156,6 @@ export default function useProjectTasks(projectId: string) {
     title: string;
     columnKey: string;
     order: number;
-    storyPoints?: number;
     priority?: 'low' | 'medium' | 'high';
   };
 
@@ -170,14 +163,12 @@ export default function useProjectTasks(projectId: string) {
     async (data: {
       title?: string;
       column: string;
-      storyPoints?: number;
       priority?: 'low' | 'medium' | 'high';
     }) => {
       const payload: CreateTaskPayload = {
         title: data.title || 'New task',
         columnKey: data.column,
         order: 1000,
-        storyPoints: data.storyPoints,
         priority: data.priority,
       };
 
@@ -196,7 +187,6 @@ export default function useProjectTasks(projectId: string) {
     title?: string;
     columnKey?: string;
     color?: string;
-    storyPoints?: number;
     priority?: 'low' | 'medium' | 'high';
     assigneeId?: string;
     dueDate?: string;
@@ -211,8 +201,6 @@ export default function useProjectTasks(projectId: string) {
         if (patch.title !== undefined) data.title = patch.title;
         if (patch.column !== undefined) data.columnKey = patch.column;
         if (patch.color !== undefined) data.color = patch.color;
-        if (patch.storyPoints !== undefined)
-          data.storyPoints = patch.storyPoints;
         if (patch.priority !== undefined) data.priority = patch.priority;
         if (patch.assigneeId !== undefined)
           data.assigneeId = patch.assigneeId || undefined;

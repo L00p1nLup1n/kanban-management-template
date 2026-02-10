@@ -88,12 +88,12 @@ export default function MoveToColumnDialog({
                       borderWidth={1}
                       borderRadius="md"
                       borderColor={
-                        selectedColumn === column.key ? 'blue.500' : 'gray.200'
+                        selectedColumn === column.key ? 'blue.500' : undefined
                       }
-                      bg={selectedColumn === column.key ? 'blue.50' : undefined}
+                      // bg={selectedColumn === column.key ? 'blue.500' : undefined}
                       cursor="pointer"
                       onClick={() => setSelectedColumn(column.key)}
-                      _hover={{ borderColor: 'blue.300' }}
+                      _hover={{ borderColor: 'gray' }}
                       transition="all 0.2s"
                     >
                       <Radio value={column.key}>

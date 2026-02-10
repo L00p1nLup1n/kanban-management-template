@@ -1,7 +1,6 @@
 export enum ColumnType {
-  HOT_TASKS = 'Hot tasks',
-  TO_DO = 'To do',
-  IN_WORK = 'In work',
+  TODO = 'To do',
+  IN_PROGRESS = 'In Progress',
   DONE = 'Done',
 }
 

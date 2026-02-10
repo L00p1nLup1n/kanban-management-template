@@ -7,7 +7,7 @@ import {
   IconButton,
   Spacer,
   Stack,
-  useColorModeValue
+  useColorModeValue,
 } from '@chakra-ui/react';
 import { AddIcon } from '@chakra-ui/icons';
 import Task from '../Task/Task';
@@ -15,10 +15,9 @@ import useColumnTasks from '../../hooks/useColumnTasks';
 import useColumnDrop from '../../hooks/useColumnDrop';
 
 export const ColumnColorScheme: Record<ColumnType, string> = {
-  'Hot tasks': 'orange',
   'To do': 'blue',
-  'In work': 'yellow',
-  Done: 'green'
+  'In Progress': 'yellow',
+  Done: 'green',
 };
 
 function Column({ column }: { column: ColumnType }) {
@@ -51,7 +50,6 @@ function Column({ column }: { column: ColumnType }) {
   return (
     <Box w="full" minW={0} display="flex" flexDirection="column">
       <Flex align="center" gap={2}>
-
         <Heading flex="1" minW={0} letterSpacing="wide" textAlign="center">
           <Badge
             display="block"
@@ -92,7 +90,7 @@ function Column({ column }: { column: ColumnType }) {
         p={3}
         mt={2}
         spacing={4}
-  bgColor={useColorModeValue('brand.surfaceLight', 'brand.column')}
+        bgColor={useColorModeValue('brand.surfaceLight', 'brand.column')}
         rounded="lg"
         boxShadow="md"
         overflow="auto"

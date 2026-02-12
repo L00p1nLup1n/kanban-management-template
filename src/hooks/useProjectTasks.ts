@@ -31,6 +31,7 @@ interface ServerTask {
   assigneeId?: string;
   assignee?: PopulatedUser;
   dueDate?: string;
+  committedAt?: string;
   startedAt?: string;
   completedAt?: string;
 }
@@ -47,6 +48,7 @@ function mapServerTaskToModel(t: ServerTask): TaskModel {
     assigneeId: t.assigneeId,
     assignee: t.assignee,
     dueDate: t.dueDate,
+    committedAt: t.committedAt,
     startedAt: t.startedAt,
     completedAt: t.completedAt,
   };
@@ -190,6 +192,7 @@ export default function useProjectTasks(projectId: string) {
     priority?: 'low' | 'medium' | 'high';
     assigneeId?: string;
     dueDate?: string;
+    committedAt?: string;
     startedAt?: string;
     completedAt?: string;
   };
@@ -206,6 +209,8 @@ export default function useProjectTasks(projectId: string) {
           data.assigneeId = patch.assigneeId || undefined;
         if (patch.dueDate !== undefined)
           data.dueDate = patch.dueDate || undefined;
+        if (patch.committedAt !== undefined)
+          data.committedAt = patch.committedAt;
         if (patch.startedAt !== undefined) data.startedAt = patch.startedAt;
         if (patch.completedAt !== undefined)
           data.completedAt = patch.completedAt;

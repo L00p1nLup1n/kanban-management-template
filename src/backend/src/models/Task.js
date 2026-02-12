@@ -25,6 +25,7 @@ const TaskSchema = new Schema(
     createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     backlog: { type: Boolean, default: false },
     // Status timestamps
+    committedAt: { type: Date },   // when task entered the board (pulled from backlog or created on board)
     startedAt: { type: Date },
     completedAt: { type: Date },
   },

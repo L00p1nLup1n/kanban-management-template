@@ -257,25 +257,26 @@ export async function updateTask(req, res) {
         }
       }
     }
-    // Check if this is a status-only update (assignees can update these)
+    
+    const isSelfAssignClaim = 
+      !task.assigneeId &&
+      task.backlog === true && 
+      updates.assigneeId === req.userId;
+    
     const statusOnlyFields = ['startedAt', 'completedAt', 'committedAt'];
     const updateKeys = Object.keys(updates);
-    const isStatusOnlyUpdate =
+    const isStatusOnlyUpdate = 
       updateKeys.length > 0 &&
       updateKeys.every((key) => statusOnlyFields.includes(key));
-
-    // If not owner, only allow status updates by assignees
+  
     if (!isOwner) {
-      if (!isAssignee) {
-        return res.status(403).json({
-          error: 'Only the project owner or task assignee can update this task',
-        });
+      // eslint-disable-next-line no-empty
+      if (isSelfAssignClaim) {}
+      else if (!isAssignee) {
+        return res.status(403).json({ error: 'Only project owner and task assignee can update this task' });
       }
-      if (!isStatusOnlyUpdate) {
-        return res.status(403).json({
-          error:
-            'Task assignees can only update status timestamps (startedAt, completedAt)',
-        });
+      else if (!isStatusOnlyUpdate) {
+        return res.status(403).json({ error: 'Task assignee can only update timestamp (startedAt, completedAt)' });
       }
     }
 

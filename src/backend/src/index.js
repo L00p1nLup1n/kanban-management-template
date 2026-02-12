@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.js';
 import projectsRoutes from './routes/projects.js';
 import tasksRoutes from './routes/tasks.js';
 import sprintsRoutes from './routes/sprints.js';
+import metricsRoutes from './routes/metrics.js';
 import process from 'process';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -31,6 +32,7 @@ app.get('/health', (_req, res) => res.json({ ok: true }));
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/projects', projectsRoutes);
 app.use('/api/v1/projects', tasksRoutes); // tasks are nested under projects
+app.use('/api/v1/projects', metricsRoutes); // flow metrics nested under projects
 app.use('/api/v1', sprintsRoutes); // sprints are nested under projects
 
 const PORT = process.env.PORT || 4000;

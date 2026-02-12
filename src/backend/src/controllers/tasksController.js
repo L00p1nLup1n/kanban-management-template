@@ -1,10 +1,71 @@
 import Task from '../models/Task.js';
 import Project from '../models/Project.js';
+import TaskHistory from '../models/TaskHistory.js';
 import {
   userHasProjectAccess,
   userIsProjectOwner,
 } from '../utils/authHelpers.js';
 import { getIO } from '../socket.js';
+
+/**
+ * Determine the position of a column within the project's column list.
+ * Returns { isFirst, isLast, order } or null if column not found.
+ */
+function getColumnPosition(project, columnKey) {
+  const sorted = [...project.columns].sort((a, b) => a.order - b.order);
+  const idx = sorted.findIndex((c) => c.key === columnKey);
+  if (idx === -1) return null;
+  return { isFirst: idx === 0, isLast: idx === sorted.length - 1, order: sorted[idx].order };
+}
+
+/**
+ * Auto-set flow timestamps based on column position.
+ * - committedAt: set when a task first enters any board column
+ * - startedAt:   set when a task enters a column past the first (position-aware)
+ * - completedAt: set when a task enters the last column
+ * Manual overrides are preserved (never overwrite existing timestamps).
+ */
+function applyAutoTimestamps(task, project, toColumnKey) {
+  const pos = getColumnPosition(project, toColumnKey);
+  if (!pos) return;
+
+  const now = new Date();
+
+  // committedAt: first time on the board
+  if (!task.committedAt) {
+    task.committedAt = now;
+  }
+
+  // startedAt: entering any column beyond the first
+  if (!pos.isFirst && !task.startedAt) {
+    task.startedAt = now;
+  }
+
+  // completedAt: entering the last column
+  if (pos.isLast && !task.completedAt) {
+    task.completedAt = now;
+  }
+}
+
+/**
+ * Record a column transition in the TaskHistory audit log.
+ */
+async function recordHistory({ taskId, projectId, fromColumn, toColumn, fromBacklog, toBacklog, movedBy }) {
+  try {
+    await TaskHistory.create({
+      taskId,
+      projectId,
+      fromColumn: fromColumn || null,
+      toColumn: toColumn || null,
+      fromBacklog: !!fromBacklog,
+      toBacklog: !!toBacklog,
+      movedBy,
+    });
+  } catch (err) {
+    // History is supplementary — don't block the main operation
+    console.warn('TaskHistory record error:', err);
+  }
+}
 
 export async function listTasks(req, res) {
   try {
@@ -106,7 +167,31 @@ export async function createTask(req, res) {
       createdBy: req.userId,
     };
 
+    // Option B: tasks created directly on board get committedAt = now
+    // Also apply position-aware auto-timestamps (startedAt / completedAt)
+    const now = new Date();
+    taskData.committedAt = now;
+
     const task = await Task.create(taskData);
+
+    // Apply position-aware auto-timestamps after creation
+    applyAutoTimestamps(task, project, columnKey);
+    // committedAt already set above, only save if startedAt/completedAt changed
+    if (task.isModified('startedAt') || task.isModified('completedAt')) {
+      await task.save();
+    }
+
+    // Record initial history: created directly on board column
+    await recordHistory({
+      taskId: task._id,
+      projectId,
+      fromColumn: null,
+      toColumn: columnKey,
+      fromBacklog: false,
+      toBacklog: false,
+      movedBy: req.userId,
+    });
+
     // emit socket event
     try {
       const io = getIO();
@@ -173,7 +258,7 @@ export async function updateTask(req, res) {
       }
     }
     // Check if this is a status-only update (assignees can update these)
-    const statusOnlyFields = ['startedAt', 'completedAt'];
+    const statusOnlyFields = ['startedAt', 'completedAt', 'committedAt'];
     const updateKeys = Object.keys(updates);
     const isStatusOnlyUpdate =
       updateKeys.length > 0 &&
@@ -209,6 +294,7 @@ export async function updateTask(req, res) {
         'priority',
         'backlog',
         'dueDate',
+        'committedAt',
         'startedAt',
         'completedAt',
       ];
@@ -218,13 +304,33 @@ export async function updateTask(req, res) {
       return res.status(403).json({ error: 'Forbidden' });
     }
 
+    // Track column change for history recording
+    const previousColumn = task.columnKey || null;
+    const columnChanging = updates.columnKey && updates.columnKey !== previousColumn;
+
     allowedFields.forEach((field) => {
       if (updates[field] !== undefined) {
         task[field] = updates[field];
       }
     });
 
-    await task.save();
+    // If column changed via direct update, apply auto-timestamps and record history
+    if (columnChanging) {
+      const project2 = project; // already fetched above
+      applyAutoTimestamps(task, project2, updates.columnKey);
+      await task.save();
+      await recordHistory({
+        taskId: task._id,
+        projectId,
+        fromColumn: previousColumn,
+        toColumn: updates.columnKey,
+        fromBacklog: false,
+        toBacklog: false,
+        movedBy: req.userId,
+      });
+    } else {
+      await task.save();
+    }
     try {
       const io = getIO();
       if (io) io.to(projectId).emit('task:updated', { task });
@@ -299,6 +405,17 @@ export async function createBacklogTask(req, res) {
       backlog: true,
     });
 
+    // Record initial history: created in backlog
+    await recordHistory({
+      taskId: task._id,
+      projectId,
+      fromColumn: null,
+      toColumn: null,
+      fromBacklog: false,
+      toBacklog: true,
+      movedBy: req.userId,
+    });
+
     try {
       const io = getIO();
       if (io) io.to(projectId).emit('task:created', { task });
@@ -333,10 +450,26 @@ export async function moveTask(req, res) {
     }
 
     if (backlog) {
-      // Move to backlog
+      // Move to backlog — clear flow timestamps (task is de-committed)
+      const previousColumn = task.columnKey || null;
       task.backlog = true;
       task.columnKey = undefined;
+      task.committedAt = undefined;
+      task.startedAt = undefined;
+      task.completedAt = undefined;
       await task.save();
+
+      // Record history: board column → backlog
+      await recordHistory({
+        taskId: task._id,
+        projectId,
+        fromColumn: previousColumn,
+        toColumn: null,
+        fromBacklog: false,
+        toBacklog: true,
+        movedBy: req.userId,
+      });
+
       try {
         const io = getIO();
         if (io) io.to(projectId).emit('task:moved', { task });
@@ -380,9 +513,28 @@ export async function moveTask(req, res) {
       });
     }
 
+    const previousColumn = task.columnKey || null;
+    const wasBacklog = !!task.backlog;
+
     task.backlog = false;
     task.columnKey = toColumnKey;
+
+    // Position-aware auto-timestamps
+    applyAutoTimestamps(task, project, toColumnKey);
+
     await task.save();
+
+    // Record history: column→column or backlog→column
+    await recordHistory({
+      taskId: task._id,
+      projectId,
+      fromColumn: previousColumn,
+      toColumn: toColumnKey,
+      fromBacklog: wasBacklog,
+      toBacklog: false,
+      movedBy: req.userId,
+    });
+
     try {
       const io = getIO();
       if (io) io.to(projectId).emit('task:moved', { task });

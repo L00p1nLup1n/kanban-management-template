@@ -106,8 +106,60 @@ export interface Task {
   createdBy: string;
   createdAt: string;
   updatedAt: string;
+  committedAt?: string;
   startedAt?: string;
   completedAt?: string;
+}
+
+// Metrics types
+export interface MetricsStats {
+  avg: number;
+  median: number;
+  p85: number;
+  min: number;
+  max: number;
+  count: number;
+}
+
+export interface ThroughputPoint {
+  date: string;
+  count: number;
+}
+
+export interface WipAgeItem {
+  taskId: string;
+  title: string;
+  column: string;
+  ageHours: number;
+  priority?: 'low' | 'medium' | 'high';
+}
+
+export interface CurrentWipColumn {
+  title: string;
+  count: number;
+  wip?: number;
+}
+
+export interface CfdData {
+  columns: string[];
+  data: Array<Record<string, string | number>>;
+}
+
+export interface ProjectMetrics {
+  cycleTime: MetricsStats;
+  leadTime: MetricsStats;
+  boardLeadTime: MetricsStats;
+  throughput: ThroughputPoint[];
+  wipAge: WipAgeItem[];
+  currentWip: Record<string, CurrentWipColumn>;
+  cfd: CfdData;
+  summary: {
+    totalTasks: number;
+    boardTasks: number;
+    backlogTasks: number;
+    completedInPeriod: number;
+    inProgress: number;
+  };
 }
 
 // API methods
@@ -205,5 +257,12 @@ export const tasksAPI = {
     apiClient.post<{ task: Task }>(
       `/projects/${projectId}/tasks/${taskId}/move`,
       data,
+    ),
+};
+
+export const metricsAPI = {
+  get: (projectId: string, days?: number) =>
+    apiClient.get<{ metrics: ProjectMetrics }>(
+      `/projects/${projectId}/metrics${days ? `?days=${days}` : ''}`,
     ),
 };

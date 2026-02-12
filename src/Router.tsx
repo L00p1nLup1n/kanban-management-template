@@ -5,7 +5,6 @@ import Login from './pages/Auth/Login';
 import Register from './pages/Auth/Register';
 import ProjectsList from './pages/Projects/ProjectsList';
 import ProjectPage from './pages/Project/ProjectPage';
-import App from './App';
 
 function Router() {
   return (
@@ -33,15 +32,6 @@ function Router() {
               </ProtectedRoute>
             }
           />
-          <Route
-            path="/board"
-            element={
-              <ProtectedRoute>
-                <App />
-              </ProtectedRoute>
-            }
-          />
-
           {/* Default redirect */}
           <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="*" element={<Navigate to="/login" replace />} />

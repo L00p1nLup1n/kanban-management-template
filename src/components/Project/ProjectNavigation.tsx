@@ -1,6 +1,6 @@
 import { Box, Button, HStack, Badge } from '@chakra-ui/react';
 
-export type ProjectView = 'board' | 'backlog';
+export type ProjectView = 'board' | 'backlog' | 'metrics';
 
 interface ProjectNavigationProps {
   activeView: ProjectView;
@@ -38,6 +38,14 @@ export default function ProjectNavigation({
           onClick={() => onViewChange('backlog')}
         >
           Backlog
+        </Button>
+        <Button
+          variant={activeView === 'metrics' ? 'solid' : 'outline'}
+          colorScheme={activeView === 'metrics' ? 'blue' : 'gray'}
+          size="sm"
+          onClick={() => onViewChange('metrics')}
+        >
+          Metrics
         </Button>
       </HStack>
     </Box>

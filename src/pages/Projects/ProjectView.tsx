@@ -29,6 +29,7 @@ import ProjectNavigation from '../../components/Project/ProjectNavigation';
 import ProjectError from '../../components/Project/ProjectError';
 import BacklogTaskItem from '../../components/Backlog/BacklogTaskItem';
 import MoveToColumnDialog from '../../components/Backlog/MoveToColumnDialog';
+import MetricsView from '../../components/Metrics/MetricsView';
 import {
   SettingsIcon,
   ArrowBackIcon,
@@ -72,8 +73,8 @@ export default function ProjectView() {
   const { user } = useAuth();
   const toast = useToast();
 
-  // View state: 'board' or 'backlog'
-  const [activeView, setActiveView] = useState<'board' | 'backlog'>('board');
+  // View state: 'board', 'backlog', or 'metrics'
+  const [activeView, setActiveView] = useState<'board' | 'backlog' | 'metrics'>('board');
 
   // Board data
   const {
@@ -538,6 +539,11 @@ export default function ProjectView() {
             )}
           </VStack>
         </Box>
+      )}
+
+      {/* Metrics View */}
+      {activeView === 'metrics' && (
+        <MetricsView projectId={projectId || ''} />
       )}
 
       {/* Settings Modal */}

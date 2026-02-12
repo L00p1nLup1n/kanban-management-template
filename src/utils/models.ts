@@ -14,6 +14,7 @@ export interface TaskModel {
   // Due date
   dueDate?: string;
   // Status timestamps
+  committedAt?: string;
   startedAt?: string;
   completedAt?: string;
 }

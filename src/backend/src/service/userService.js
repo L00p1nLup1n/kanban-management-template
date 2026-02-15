@@ -1,7 +1,13 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import User from '../models/User.js';
 import process from 'process';
+import {
+  create,
+  findByEmail,
+  findById,
+  getTimeStamps,
+} from '../repository/userRepository.js';
+import { formatDate } from '../helpers/formatDate.js';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'default_secret';
 const JWT_EXPIRES_IN = '30m';
@@ -21,7 +27,7 @@ export async function createUser(email, password, name) {
   const passwordHash = await bcrypt.hash(password, 10);
 
   // Create user
-  const user = await User.create({ email, passwordHash, name });
+  const user = await create(email, passwordHash, name);
 
   return user;
 }
@@ -33,8 +39,8 @@ export async function createUser(email, password, name) {
  * @param {string} email - User's email address to search for
  * @returns {Promise<Object|null>} Promise that resolves to the User document if found, or null if not found
  */
-export async function findUser(email) {
-  return await User.findOne({ email });
+export async function findUserByEmail(email) {
+  return await findByEmail(email);
 }
 
 /**
@@ -43,11 +49,9 @@ export async function findUser(email) {
  * @function findUserById
  * @param {string} userId - User's MongoDB ObjectId
  * @returns {Promise<Object|null>} Promise that resolves to the User document without passwordHash field if found, or null if not found
- * @param {string} userId - User id
- * @returns {Object} User object using `findById(userId)` without password hash
  */
 export async function findUserById(userId) {
-  return await User.findById(userId).select('-passwordHash');
+  return await findById(userId);
 }
 
 /**
@@ -57,11 +61,7 @@ export async function findUserById(userId) {
  * @param {Object} user - User document from MongoDB containing passwordHash field
  * @param {string} user.passwordHash - The hashed password stored in the database
  * @param {string} password - Plain text password to verify
- * @returns {Promise<boolean>} Promise that resolves to true if password matches, false otherwises
- * @async
- * @param {Object} user - `User` object
- * @param {string} password - User password
- * @returns {Object}
+ * @returns {Promise<boolean>} Promise that resolves to true if password matches, false otherwise
  */
 export async function verifyCredentials(user, password) {
   return await bcrypt.compare(password, user.passwordHash);
@@ -92,23 +92,11 @@ export async function generateTokenForUser(user) {
  * @returns {string} returns.updatedAt - When the user account was last updated (human-readable format)
  */
 export async function getUserTimestamps(userId) {
-  const user = await User.findById(userId).select('createdAt updatedAt');
+  const user = await getTimeStamps(userId);
 
   if (!user) {
     return null;
   }
-  
-  const formatDate = (date) => {
-    return date.toLocaleString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: true,
-    });
-  };
 
   return {
     createdAt: formatDate(user.createdAt),

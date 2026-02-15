@@ -1,7 +1,7 @@
-import { ValidationError } from '../utils/error.js';
+import { ValidationError } from '../errors/error.js';
 import {
   createUser,
-  findUser,
+  findUserByEmail,
   verifyCredentials,
   findUserById,
   generateTokenForUser,
@@ -17,7 +17,7 @@ export async function register(req, res) {
     }
 
     // check if user already exist in the database
-    if (await findUser(email)) {
+    if (await findUserByEmail(email)) {
       throw new ValidationError(409, 'Login failed'); // Generic error message to avoid email enumeration
     }
 
@@ -30,7 +30,7 @@ export async function register(req, res) {
       user: { id: user._id, email: user.email, name: user.name },
       accessToken,
     });
-    
+
   } catch (err) {
     return res
       .status(err.statusCode || 500) // fallback to 500 in case of unhandled HTTP status codes which will omit error messages
@@ -46,7 +46,7 @@ export async function login(req, res) {
       throw new ValidationError(401, 'Email and password required');
     }
     // Find user
-    const user = await findUser(email);
+    const user = await findUserByEmail(email);
     if (!user) {
       throw new ValidationError(401, 'Invalid credentials');
     }

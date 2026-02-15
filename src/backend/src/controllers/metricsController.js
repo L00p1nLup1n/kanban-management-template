@@ -1,7 +1,7 @@
 import Task from '../models/Task.js';
 import TaskHistory from '../models/TaskHistory.js';
 import Project from '../models/Project.js';
-import { userHasProjectAccess } from '../utils/authHelpers.js';
+import { userHasProjectAccess } from '../utils/authUtils.js';
 
 /**
  * GET /api/v1/projects/:projectId/metrics
@@ -44,19 +44,23 @@ export async function getProjectMetrics(req, res) {
       (t) => t.completedAt && t.startedAt && new Date(t.completedAt) >= since,
     );
     const cycleTimes = completedTasks.map(
-      (t) => (new Date(t.completedAt) - new Date(t.startedAt)) / (1000 * 60 * 60),
+      (t) =>
+        (new Date(t.completedAt) - new Date(t.startedAt)) / (1000 * 60 * 60),
     );
 
     // ── Lead Time (createdAt → completedAt) ─────────────────────────
     const leadTimes = completedTasks.map(
-      (t) => (new Date(t.completedAt) - new Date(t.createdAt)) / (1000 * 60 * 60),
+      (t) =>
+        (new Date(t.completedAt) - new Date(t.createdAt)) / (1000 * 60 * 60),
     );
 
     // ── Board Lead Time (committedAt → completedAt) ─────────────────
     const boardLeadTimes = completedTasks
       .filter((t) => t.committedAt)
       .map(
-        (t) => (new Date(t.completedAt) - new Date(t.committedAt)) / (1000 * 60 * 60),
+        (t) =>
+          (new Date(t.completedAt) - new Date(t.committedAt)) /
+          (1000 * 60 * 60),
       );
 
     // ── Throughput (tasks completed per day, last N days) ───────────
@@ -82,15 +86,17 @@ export async function getProjectMetrics(req, res) {
       taskId: t._id,
       title: t.title,
       column: t.columnKey,
-      ageHours: Math.round(
-        (now - new Date(t.startedAt)) / (1000 * 60 * 60) * 10,
-      ) / 10,
+      ageHours:
+        Math.round(((now - new Date(t.startedAt)) / (1000 * 60 * 60)) * 10) /
+        10,
       priority: t.priority,
     }));
 
     // ── Current WIP per column ──────────────────────────────────────
     const currentWip = {};
-    const sortedColumns = [...project.columns].sort((a, b) => a.order - b.order);
+    const sortedColumns = [...project.columns].sort(
+      (a, b) => a.order - b.order,
+    );
     sortedColumns.forEach((c) => {
       currentWip[c.key] = { title: c.title, count: 0, wip: c.wip };
     });
@@ -136,7 +142,8 @@ function computeStats(values) {
     return { avg: 0, median: 0, p85: 0, min: 0, max: 0, count: 0 };
   }
   const sorted = [...values].sort((a, b) => a - b);
-  const avg = Math.round((sorted.reduce((s, v) => s + v, 0) / sorted.length) * 10) / 10;
+  const avg =
+    Math.round((sorted.reduce((s, v) => s + v, 0) / sorted.length) * 10) / 10;
   const median = Math.round(sorted[Math.floor(sorted.length / 2)] * 10) / 10;
   const p85 = Math.round(sorted[Math.floor(sorted.length * 0.85)] * 10) / 10;
   const min = Math.round(sorted[0] * 10) / 10;

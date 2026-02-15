@@ -6,7 +6,7 @@ import { getIO } from '../socket.js';
 import {
   userHasProjectAccess,
   userIsProjectOwner,
-} from '../utils/authHelpers.js';
+} from '../utils/authUtils.js';
 
 export async function listSprints(req, res) {
   try {

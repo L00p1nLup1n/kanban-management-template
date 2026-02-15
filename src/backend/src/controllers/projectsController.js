@@ -3,11 +3,11 @@ import { getIO } from '../socket.js';
 import { v4 as uuidv4 } from 'uuid';
 import crypto from 'crypto';
 
-// Default columns for new projects
-const DEFAULT_COLUMNS = [
-  { id: uuidv4(), key: 'todo', title: 'To do', order: 1 },
-  { id: uuidv4(), key: 'inprogress', title: 'In Progress', order: 2 },
-  { id: uuidv4(), key: 'done', title: 'Done', order: 3 },
+// Default columns template for new projects
+const DEFAULT_COLUMNS_TEMPLATE = [
+  { key: 'todo', title: 'To do', order: 1 },
+  { key: 'inprogress', title: 'In Progress', order: 2 },
+  { key: 'done', title: 'Done', order: 3 },
 ];
 
 export async function listProjects(req, res) {
@@ -74,7 +74,9 @@ export async function createProject(req, res) {
       ownerId: req.userId,
       name,
       description,
-      columns: columns || DEFAULT_COLUMNS,
+      columns:
+        columns ||
+        DEFAULT_COLUMNS_TEMPLATE.map((col) => ({ ...col, id: uuidv4() })), // copy all the properties of each column can generate a unique id
       joinCode,
       members: [],
     };

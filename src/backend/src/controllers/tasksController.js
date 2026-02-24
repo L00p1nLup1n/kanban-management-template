@@ -4,7 +4,7 @@ import TaskHistory from '../models/TaskHistory.js';
 import {
   userHasProjectAccess,
   userIsProjectOwner,
-} from '../utils/authHelpers.js';
+} from '../utils/authUtils.js';
 import { getIO } from '../socket.js';
 
 /**
@@ -15,7 +15,11 @@ function getColumnPosition(project, columnKey) {
   const sorted = [...project.columns].sort((a, b) => a.order - b.order);
   const idx = sorted.findIndex((c) => c.key === columnKey);
   if (idx === -1) return null;
-  return { isFirst: idx === 0, isLast: idx === sorted.length - 1, order: sorted[idx].order };
+  return {
+    isFirst: idx === 0,
+    isLast: idx === sorted.length - 1,
+    order: sorted[idx].order,
+  };
 }
 
 /**
@@ -50,7 +54,15 @@ function applyAutoTimestamps(task, project, toColumnKey) {
 /**
  * Record a column transition in the TaskHistory audit log.
  */
-async function recordHistory({ taskId, projectId, fromColumn, toColumn, fromBacklog, toBacklog, movedBy }) {
+async function recordHistory({
+  taskId,
+  projectId,
+  fromColumn,
+  toColumn,
+  fromBacklog,
+  toBacklog,
+  movedBy,
+}) {
   try {
     await TaskHistory.create({
       taskId,
@@ -306,7 +318,8 @@ export async function updateTask(req, res) {
 
     // Track column change for history recording
     const previousColumn = task.columnKey || null;
-    const columnChanging = updates.columnKey && updates.columnKey !== previousColumn;
+    const columnChanging =
+      updates.columnKey && updates.columnKey !== previousColumn;
 
     allowedFields.forEach((field) => {
       if (updates[field] !== undefined) {

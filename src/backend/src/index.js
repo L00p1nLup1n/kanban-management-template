@@ -35,6 +35,28 @@ app.use('/api/v1/projects', tasksRoutes); // tasks are nested under projects
 app.use('/api/v1/projects', metricsRoutes); // flow metrics nested under projects
 app.use('/api/v1', sprintsRoutes); // sprints are nested under projects
 
+// Custom error class handler
+app.use((err, req, res, next) => {
+  console.error('Error:', err);
+
+  // Handle custom error classes
+  if (err.statusCode) {
+    return res.status(err.statusCode).json({ error: err.message });
+  }
+
+  // Handle unexpected errors
+  const statusCode = err.status || 500;
+  const message =
+    process.env.NODE_ENV === 'development'
+      ? err.message
+      : 'Internal server error';
+
+  res.status(statusCode).json({
+    error: message,
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
 const PORT = process.env.PORT || 4000;
 
 async function start() {

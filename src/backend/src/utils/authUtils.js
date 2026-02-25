@@ -6,11 +6,15 @@
  */
 export function userHasProjectAccess(project, userId) {
   if (!project) return false;
-  const isOwner =
-    project.ownerId && project.ownerId.toString() === String(userId);
+  const ownerId = project.ownerId._id || project.ownerId;
+  const isOwner = ownerId.toString() === String(userId);
   const isMember =
     Array.isArray(project.members) &&
-    project.members.some((m) => String(m) === String(userId));
+    project.members.some((m) => {
+      if (!m) return false; // guard against null members
+      const memberId = m._id || m;
+      return memberId.toString() === String(userId);
+    });
   return isOwner || isMember;
 }
 
@@ -22,5 +26,20 @@ export function userHasProjectAccess(project, userId) {
  */
 export function userIsProjectOwner(project, userId) {
   if (!project) return false;
-  return project.ownerId && project.ownerId.toString() === String(userId);
+  const ownerId = project.ownerId._id || project.ownerId;
+  return ownerId.toString() === String(userId);
+}
+
+/**
+ * Check if a user is a member of a project but not the owner
+ * @param {Object} project - Project document from MongoDB
+ * @param {string} userId - User ID to check
+ * @returns {boolean}
+ */
+export function userIsProjectMember(project, userId) {
+  if (!project) return false;
+  return (
+    !userIsProjectOwner(project, userId) &&
+    userHasProjectAccess(project, userId)
+  );
 }

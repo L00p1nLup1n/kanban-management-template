@@ -8,7 +8,7 @@ import {
 import useSocket from './useSocket';
 import { ColumnType } from '../utils/enums';
 import { TaskModel } from '../utils/models';
-import pickChakraRandomColor from '../helpers/pickChakraRandomColor';
+import pickChakraRandomColor from '../utils/pickChakraRandomColor';
 
 type ColumnsMap = Record<string, TaskModel[]>;
 

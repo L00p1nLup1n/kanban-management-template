@@ -30,7 +30,12 @@ export default function ProjectNavigation({
           size="sm"
           rightIcon={
             backlogCount !== undefined && backlogCount > 0 ? (
-              <Badge bg="blue.500" color="white" borderRadius="full" fontSize="xs" >
+              <Badge
+                bg="blue.500"
+                color="white"
+                borderRadius="full"
+                fontSize="xs"
+              >
                 {backlogCount}
               </Badge>
             ) : undefined

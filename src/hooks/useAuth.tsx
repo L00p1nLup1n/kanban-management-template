@@ -1,4 +1,10 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { authAPI, User } from '../api/client';
 import { useNavigate } from 'react-router-dom';
 
@@ -32,7 +38,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const response = await authAPI.me();
           // Normalize the user shape: backend may return a populated user with `_id`.
           const respUser = response.data.user as unknown;
-          const userObj = (respUser && typeof respUser === 'object') ? (respUser as Record<string, unknown>) : {};
+          const userObj =
+            respUser && typeof respUser === 'object'
+              ? (respUser as Record<string, unknown>)
+              : {};
           const normalized = {
             id: String(userObj['id'] || userObj['_id'] || ''),
             email: String(userObj['email'] || ''),
@@ -59,8 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const response = await authAPI.login(email, password);
       const respUser = response.data.user as unknown;
-      const ru = (respUser && typeof respUser === 'object') ? (respUser as Record<string, unknown>) : {};
-      const normalizedUser = { id: String(ru['id'] || ru['_id'] || ''), email: String(ru['email'] || ''), name: String(ru['name'] || '') };
+      const ru =
+        respUser && typeof respUser === 'object'
+          ? (respUser as Record<string, unknown>)
+          : {};
+      const normalizedUser = {
+        id: String(ru['id'] || ru['_id'] || ''),
+        email: String(ru['email'] || ''),
+        name: String(ru['name'] || ''),
+      };
 
       const accessToken = response.data.accessToken as string;
       localStorage.setItem('accessToken', accessToken);
@@ -72,7 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // err is unknown in strict TS; try to extract message safely
       let message = 'Login failed';
       if (err && typeof err === 'object' && 'response' in err) {
-        const maybe = (err as Record<string, unknown>).response as Record<string, unknown> | undefined;
+        const maybe = (err as Record<string, unknown>).response as
+          | Record<string, unknown>
+          | undefined;
         if (maybe && 'data' in maybe) {
           const d = maybe.data as Record<string, unknown> | undefined;
           if (d && typeof d.error === 'string') message = d.error;
@@ -91,8 +109,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       const response = await authAPI.register(email, password, name);
       const respUser = response.data.user as unknown;
-      const ru = (respUser && typeof respUser === 'object') ? (respUser as Record<string, unknown>) : {};
-      const normalizedUser = { id: String(ru['id'] || ru['_id'] || ''), email: String(ru['email'] || ''), name: String(ru['name'] || '') };
+      const ru =
+        respUser && typeof respUser === 'object'
+          ? (respUser as Record<string, unknown>)
+          : {};
+      const normalizedUser = {
+        id: String(ru['id'] || ru['_id'] || ''),
+        email: String(ru['email'] || ''),
+        name: String(ru['name'] || ''),
+      };
       const accessToken = response.data.accessToken as string;
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('user', JSON.stringify(normalizedUser));
@@ -102,7 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (err: unknown) {
       let message = 'Registration failed';
       if (err && typeof err === 'object' && 'response' in err) {
-        const maybe = (err as Record<string, unknown>).response as Record<string, unknown> | undefined;
+        const maybe = (err as Record<string, unknown>).response as
+          | Record<string, unknown>
+          | undefined;
         if (maybe && 'data' in maybe) {
           const d = maybe.data as Record<string, unknown> | undefined;
           if (d && typeof d.error === 'string') message = d.error;

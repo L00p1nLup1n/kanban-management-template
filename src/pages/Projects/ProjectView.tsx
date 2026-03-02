@@ -74,7 +74,9 @@ export default function ProjectView() {
   const toast = useToast();
 
   // View state: 'board', 'backlog', or 'metrics'
-  const [activeView, setActiveView] = useState<'board' | 'backlog' | 'metrics'>('board');
+  const [activeView, setActiveView] = useState<'board' | 'backlog' | 'metrics'>(
+    'board',
+  );
 
   // Board data
   const {
@@ -119,7 +121,7 @@ export default function ProjectView() {
 
   // Check if current user is the project owner
   const isOwner = Boolean(
-    user && projectOwnerId && getUserId(projectOwnerId) === user.id
+    user && projectOwnerId && getUserId(projectOwnerId) === user.id,
   );
 
   // Listen for member join/remove events and show notifications
@@ -423,10 +425,10 @@ export default function ProjectView() {
           {(projectColumns && projectColumns.length > 0
             ? projectColumns.map((c) => c)
             : Object.values(ColumnType).map((k) => ({
-              key: k,
-              title: k,
-              wip: undefined,
-            }))
+                key: k,
+                title: k,
+                wip: undefined,
+              }))
           ).map((colMeta) => (
             <ProjectColumn
               key={colMeta.key}
@@ -542,9 +544,7 @@ export default function ProjectView() {
       )}
 
       {/* Metrics View */}
-      {activeView === 'metrics' && (
-        <MetricsView projectId={projectId || ''} />
-      )}
+      {activeView === 'metrics' && <MetricsView projectId={projectId || ''} />}
 
       {/* Settings Modal */}
       {isOwner && (

@@ -8,4 +8,4 @@ export const AutoResizeTextArea = React.forwardRef<
   TextareaProps
 >((props, ref) => {
   return <Textarea as={ResizeTextarea} minH="unset" ref={ref} {...props} />;
-}); 
+});

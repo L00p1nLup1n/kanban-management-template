@@ -16,7 +16,9 @@ export default function useMetrics(projectId: string, days = 30) {
       setMetrics(res.data.metrics);
     } catch (err: any) {
       console.error('load metrics', err);
-      setError(err?.response?.data?.error || err?.message || 'Failed to load metrics');
+      setError(
+        err?.response?.data?.error || err?.message || 'Failed to load metrics',
+      );
     } finally {
       setLoading(false);
     }

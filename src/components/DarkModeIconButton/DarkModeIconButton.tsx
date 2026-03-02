@@ -19,4 +19,4 @@ function DarkModeIconButton({
   );
 }
 
-export default DarkModeIconButton; 
+export default DarkModeIconButton;

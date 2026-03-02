@@ -337,18 +337,19 @@ function ProjectsList() {
             )}
             {projects.map((p) => {
               // Normalize and check ownership
-              const projectOwnerId = typeof p.ownerId === 'object' && p.ownerId?._id 
-                ? String(p.ownerId._id) 
-                : String(p.ownerId);
+              const projectOwnerId =
+                typeof p.ownerId === 'object' && p.ownerId?._id
+                  ? String(p.ownerId._id)
+                  : String(p.ownerId);
               const currentUserId = String(user?.id);
               const isOwner = projectOwnerId === currentUserId;
-              
+
               return (
-                <Box 
-                  key={p._id} 
-                  p={4} 
-                  borderRadius="md" 
-                  bg={cardBg} 
+                <Box
+                  key={p._id}
+                  p={4}
+                  borderRadius="md"
+                  bg={cardBg}
                   boxShadow="sm"
                   position="relative"
                   role="group"
@@ -362,13 +363,19 @@ function ProjectsList() {
                     {/* Left side - Project info */}
                     <Box flex="1">
                       <Text fontWeight="bold" mb={2}>
-                        <ChakraLink as={RouterLink} to={`/projects/${p._id}`} color="blue.500">
+                        <ChakraLink
+                          as={RouterLink}
+                          to={`/projects/${p._id}`}
+                          color="blue.500"
+                        >
                           {p.name}
                         </ChakraLink>
                       </Text>
-                      <Text fontSize="sm" color="gray.500" mt={1}>{p.description}</Text>
+                      <Text fontSize="sm" color="gray.500" mt={1}>
+                        {p.description}
+                      </Text>
                     </Box>
-                    
+
                     {/* Right side - Badge, Join Code, and Delete Button */}
                     <VStack align="flex-end" spacing={1}>
                       <HStack spacing={2}>
@@ -380,7 +387,7 @@ function ProjectsList() {
                         ) : (
                           <Badge colorScheme="gray">Unknown Role</Badge>
                         )}
-                        
+
                         {/* Delete Button - ONLY for owners */}
                         {isOwner && (
                           <IconButton
@@ -396,7 +403,7 @@ function ProjectsList() {
                           />
                         )}
                       </HStack>
-                      
+
                       {/* Join Code - Below badge/button */}
                       {p.joinCode && (
                         <Text fontSize="xs" color="gray.400">

@@ -3,7 +3,6 @@ import { ProjectError } from '../errors/error.js';
 import {
   listProjectsForUser,
   findProjectById,
-  findProjectByCode,
   createProjectWithProjectData,
   updateProjectSettings,
   deleteUserProject,

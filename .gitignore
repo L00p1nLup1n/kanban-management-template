@@ -24,6 +24,5 @@ dist-ssr
 *.sw?
 
 .vscode
-.docs
 opencode.json
 CLAUDE.md

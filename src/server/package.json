@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node --watch ./src/index.js",
-    "start": "node ./src/index.js",
+    "dev": "node --watch ./index.js",
+    "start": "node ./index.js",
     "build": "echo 'No build step required for backend skeleton'",
-    "init-db": "node ./init-db.js",
-    "test-connection": "node ./test-connection.js",
+    "init-db": "node ./scripts/init-db.js",
+    "test-connection": "node ./scripts/test-connection.js",
     "test-api": "./test-api.sh"
   },
   "dependencies": {

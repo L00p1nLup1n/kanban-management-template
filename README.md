@@ -59,16 +59,16 @@ export default {
 
 ## Backend
 
-This repository now contains a fully functional backend under `src/backend`.
+This repository now contains a fully functional backend under `src/server/`.
 
-- Backend entry: `src/backend/src/index.js` (Express + Mongoose + JWT auth)
+- Backend entry: `src/server/index.js` (Express + Mongoose + JWT auth)
 - Database: MongoDB running locally on `localhost:27017/kanban`
 - Server: Running on `http://localhost:4000`
 
 ### Quick Start
 
 ```bash
-cd src/backend
+cd src/server
 npm install
 
 # Database is already initialized with demo data!
@@ -90,7 +90,7 @@ npm run test-connection  # Test MongoDB connection
 npm run test-api         # Test all API endpoints
 ```
 
-Note: The frontend code remains under `src/` and a separate Vite entry `src/frontend/main.tsx` was added to make the separation explicit. The main `index.html` now loads `/src/frontend/main.tsx`.
+Note: The frontend code lives under `src/webapp/` with the app entry point in `src/webapp/app/main.tsx`. The backend is in `src/server/`.
 
 - Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
 - Optionally add `plugin:@typescript-eslint/stylistic-type-checked`

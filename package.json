@@ -6,11 +6,11 @@
   "scripts": {
     "dev": "vite --open",
     "dev:frontend": "vite --open",
-    "dev:backend": "npm --prefix src/backend run dev",
-    "start:backend": "npm --prefix src/backend start",
-    "backend:init-db": "npm --prefix src/backend run init-db",
-    "backend:test-connection": "npm --prefix src/backend run test-connection",
-    "backend:test-api": "npm --prefix src/backend run test-api",
+    "dev:backend": "npm --prefix src/server run dev",
+    "start:backend": "npm --prefix src/server start",
+    "backend:init-db": "npm --prefix src/server run init-db",
+    "backend:test-connection": "npm --prefix src/server run test-connection",
+    "backend:test-api": "npm --prefix src/server run test-api",
     "build": "tsc && vite build",
     "preview": "vite preview",
     "prepare": "husky"

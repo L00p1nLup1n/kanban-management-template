@@ -5,7 +5,7 @@ This folder contains the Express + Mongoose backend for the Kanban app with full
 ## Quick start
 
 ```bash
-cd src/backend
+cd server
 npm install
 cp .env.example .env
 # edit .env (set MONGO_URI, JWT_SECRET, etc.)

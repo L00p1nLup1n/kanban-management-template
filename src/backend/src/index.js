@@ -8,7 +8,6 @@ import { initSocket } from './socket.js';
 import authRoutes from './routes/auth.js';
 import projectsRoutes from './routes/projects.js';
 import tasksRoutes from './routes/tasks.js';
-import sprintsRoutes from './routes/sprints.js';
 import metricsRoutes from './routes/metrics.js';
 import process from 'process';
 
@@ -33,7 +32,6 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/projects', projectsRoutes);
 app.use('/api/v1/projects', tasksRoutes); // tasks are nested under projects
 app.use('/api/v1/projects', metricsRoutes); // flow metrics nested under projects
-app.use('/api/v1', sprintsRoutes); // sprints are nested under projects
 
 // Custom error class handler
 app.use((err, req, res, next) => {

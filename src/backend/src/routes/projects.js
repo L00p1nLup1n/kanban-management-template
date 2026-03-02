@@ -1,13 +1,13 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
 import {
-    listProjects,
-    getProject,
-    createProject,
-    updateProject,
-    deleteProject,
-    joinProjectByCode,
-    removeMember,
+  listProjects,
+  getProject,
+  createProject,
+  updateProject,
+  deleteProject,
+  joinProjectByCode,
+  removeMember,
 } from '../controllers/projectsController.js';
 
 const router = express.Router();

@@ -30,7 +30,6 @@ export async function register(req, res) {
       user: { id: user._id, email: user.email, name: user.name },
       accessToken,
     });
-
   } catch (err) {
     return res
       .status(err.statusCode || 500) // fallback to 500 in case of unhandled HTTP status codes which will omit error messages
@@ -64,7 +63,6 @@ export async function login(req, res) {
       user: { id: user._id, email: user.email, name: user.name },
       accessToken,
     });
-
   } catch (err) {
     return res
       .status(err.statusCode || 500)
@@ -91,7 +89,6 @@ export async function me(req, res) {
         updatedAt: updatedAt,
       },
     });
-
   } catch (err) {
     return res
       .status(err.statusCode || 500)

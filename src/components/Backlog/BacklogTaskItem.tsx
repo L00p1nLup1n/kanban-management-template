@@ -187,8 +187,9 @@ export default function BacklogTaskItem({
         <HStack spacing={1}>
           {task.assignee && (
             <Tooltip
-              label={`Assigned to: ${task.assignee.name || task.assignee.email
-                }`}
+              label={`Assigned to: ${
+                task.assignee.name || task.assignee.email
+              }`}
             >
               <Avatar
                 size="sm"
@@ -214,12 +215,7 @@ export default function BacklogTaskItem({
                   variant="ghost"
                 />
               </PopoverTrigger>
-              <PopoverContent
-                w={64}
-                p={2}
-                bg={popoverBg}
-                borderRadius={10}
-              >
+              <PopoverContent w={64} p={2} bg={popoverBg} borderRadius={10}>
                 <PopoverArrow />
                 <PopoverBody>
                   <FormLabel fontSize="sm" mb={1}>

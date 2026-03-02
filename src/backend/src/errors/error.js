@@ -38,4 +38,3 @@ export class TaskError extends Error {
     this.message = message;
   }
 }
-

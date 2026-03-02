@@ -3,7 +3,7 @@ function fnv1aHash(str: string) {
   let h = 0x811c9dc5;
   for (let i = 0; i < str.length; i++) {
     h ^= str.charCodeAt(i);
-    h = (h >>> 0) * 0x01000193 >>> 0;
+    h = ((h >>> 0) * 0x01000193) >>> 0;
   }
   return h >>> 0;
 }
@@ -18,7 +18,7 @@ function pickChakraRandomColor(seed?: string, variant = '') {
     'blue',
     'cyan',
     'purple',
-    'pink'
+    'pink',
   ];
 
   let index: number;

@@ -19,6 +19,7 @@ The server listens on the port configured in `.env` (default 4000).
 See [API.md](./API.md) for full endpoint documentation.
 
 Key routes:
+
 - `POST /api/v1/auth/register` - register new user
 - `POST /api/v1/auth/login` - login
 - `GET /api/v1/auth/me` - get current user (requires auth)

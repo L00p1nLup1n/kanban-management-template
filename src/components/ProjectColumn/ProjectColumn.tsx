@@ -86,7 +86,7 @@ function ProjectColumn({
       }
       onUpdate={onUpdate}
       onDelete={onDelete}
-    //   onMoveToBacklog={onMoveToBacklog}
+      //   onMoveToBacklog={onMoveToBacklog}
       projectMembers={projectMembers}
       projectOwnerId={projectOwnerId}
     />

@@ -66,7 +66,9 @@ export default function MetricsView({ projectId }: MetricsViewProps) {
     return (
       <Box textAlign="center" py={12}>
         <Spinner size="lg" />
-        <Text mt={4} color={mutedColor}>Loading metrics...</Text>
+        <Text mt={4} color={mutedColor}>
+          Loading metrics...
+        </Text>
       </Box>
     );
   }
@@ -85,9 +87,13 @@ export default function MetricsView({ projectId }: MetricsViewProps) {
     <Box>
       {/* Time range selector */}
       <HStack mb={6} justify="space-between" wrap="wrap">
-        <Heading size="md" color={textColor}>Flow Metrics</Heading>
+        <Heading size="md" color={textColor}>
+          Flow Metrics
+        </Heading>
         <HStack>
-          <Text fontSize="sm" color={mutedColor}>Period:</Text>
+          <Text fontSize="sm" color={mutedColor}>
+            Period:
+          </Text>
           <Select
             size="sm"
             w="140px"
@@ -104,7 +110,13 @@ export default function MetricsView({ projectId }: MetricsViewProps) {
       </HStack>
 
       {/* Summary Stats Row */}
-      <SummaryStats metrics={metrics} cardBg={cardBg} borderColor={borderColor} textColor={textColor} mutedColor={mutedColor} />
+      <SummaryStats
+        metrics={metrics}
+        cardBg={cardBg}
+        borderColor={borderColor}
+        textColor={textColor}
+        mutedColor={mutedColor}
+      />
 
       {/* Charts Grid */}
       <Grid
@@ -113,30 +125,69 @@ export default function MetricsView({ projectId }: MetricsViewProps) {
         mt={6}
       >
         {/* Throughput Chart */}
-        <ChartCard title="Throughput" subtitle="Tasks completed per day" cardBg={cardBg} borderColor={borderColor} textColor={textColor}>
+        <ChartCard
+          title="Throughput"
+          subtitle="Tasks completed per day"
+          cardBg={cardBg}
+          borderColor={borderColor}
+          textColor={textColor}
+        >
           <ResponsiveContainer width="100%" height={250}>
             <BarChart data={metrics.throughput}>
               <CartesianGrid strokeDasharray="3 3" stroke={borderColor} />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: mutedColor }} tickFormatter={formatDate} />
-              <YAxis tick={{ fontSize: 11, fill: mutedColor }} allowDecimals={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: mutedColor }}
+                tickFormatter={formatDate}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: mutedColor }}
+                allowDecimals={false}
+              />
               <Tooltip
-                contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${borderColor}`, borderRadius: 8 }}
+                contentStyle={{
+                  backgroundColor: tooltipBg,
+                  border: `1px solid ${borderColor}`,
+                  borderRadius: 8,
+                }}
                 labelFormatter={(label) => formatDate(label as string)}
               />
-              <Bar dataKey="count" fill="#A6D5FA" radius={[4, 4, 0, 0]} name="Completed" />
+              <Bar
+                dataKey="count"
+                fill="#A6D5FA"
+                radius={[4, 4, 0, 0]}
+                name="Completed"
+              />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
 
         {/* Cumulative Flow Diagram */}
-        <ChartCard title="Cumulative Flow Diagram" subtitle="Task distribution over time" cardBg={cardBg} borderColor={borderColor} textColor={textColor}>
+        <ChartCard
+          title="Cumulative Flow Diagram"
+          subtitle="Task distribution over time"
+          cardBg={cardBg}
+          borderColor={borderColor}
+          textColor={textColor}
+        >
           <ResponsiveContainer width="100%" height={250}>
             <AreaChart data={metrics.cfd.data}>
               <CartesianGrid strokeDasharray="3 3" stroke={borderColor} />
-              <XAxis dataKey="date" tick={{ fontSize: 11, fill: mutedColor }} tickFormatter={formatDate} />
-              <YAxis tick={{ fontSize: 11, fill: mutedColor }} allowDecimals={false} />
+              <XAxis
+                dataKey="date"
+                tick={{ fontSize: 11, fill: mutedColor }}
+                tickFormatter={formatDate}
+              />
+              <YAxis
+                tick={{ fontSize: 11, fill: mutedColor }}
+                allowDecimals={false}
+              />
               <Tooltip
-                contentStyle={{ backgroundColor: tooltipBg, border: `1px solid ${borderColor}`, borderRadius: 8 }}
+                contentStyle={{
+                  backgroundColor: tooltipBg,
+                  border: `1px solid ${borderColor}`,
+                  borderRadius: 8,
+                }}
                 labelFormatter={(label) => formatDate(label as string)}
               />
               <Legend />
@@ -164,12 +215,24 @@ export default function MetricsView({ projectId }: MetricsViewProps) {
         mt={6}
       >
         {/* Current WIP */}
-        <ChartCard title="Current WIP" subtitle="Tasks per column vs. limits" cardBg={cardBg} borderColor={borderColor} textColor={textColor}>
+        <ChartCard
+          title="Current WIP"
+          subtitle="Tasks per column vs. limits"
+          cardBg={cardBg}
+          borderColor={borderColor}
+          textColor={textColor}
+        >
           <WipTable currentWip={metrics.currentWip} mutedColor={mutedColor} />
         </ChartCard>
 
         {/* WIP Age (Aging Work) */}
-        <ChartCard title="Aging Work Items" subtitle="In-progress tasks by age" cardBg={cardBg} borderColor={borderColor} textColor={textColor}>
+        <ChartCard
+          title="Aging Work Items"
+          subtitle="In-progress tasks by age"
+          cardBg={cardBg}
+          borderColor={borderColor}
+          textColor={textColor}
+        >
           <AgingTable wipAge={metrics.wipAge} mutedColor={mutedColor} />
         </ChartCard>
       </Grid>
@@ -194,7 +257,11 @@ function SummaryStats({
 }) {
   return (
     <Grid
-      templateColumns={{ base: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)', xl: 'repeat(5, 1fr)' }}
+      templateColumns={{
+        base: 'repeat(2, 1fr)',
+        md: 'repeat(4, 1fr)',
+        xl: 'repeat(5, 1fr)',
+      }}
       gap={4}
     >
       <StatCard
@@ -271,12 +338,26 @@ function StatCard({
   mutedColor: string;
 }) {
   return (
-    <Box bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="lg" p={4}>
+    <Box
+      bg={cardBg}
+      border="1px solid"
+      borderColor={borderColor}
+      borderRadius="lg"
+      p={4}
+    >
       <Stat>
-        <StatLabel color={mutedColor} fontSize="xs">{label}</StatLabel>
-        <StatNumber color={textColor} fontSize="2xl">{value}</StatNumber>
-        <StatHelpText color={mutedColor} fontSize="xs" mb={0}>{help}</StatHelpText>
-        <Text color={mutedColor} fontSize="xs">{subValue}</Text>
+        <StatLabel color={mutedColor} fontSize="xs">
+          {label}
+        </StatLabel>
+        <StatNumber color={textColor} fontSize="2xl">
+          {value}
+        </StatNumber>
+        <StatHelpText color={mutedColor} fontSize="xs" mb={0}>
+          {help}
+        </StatHelpText>
+        <Text color={mutedColor} fontSize="xs">
+          {subValue}
+        </Text>
       </Stat>
     </Box>
   );
@@ -298,10 +379,20 @@ function ChartCard({
   textColor: string;
 }) {
   return (
-    <Box bg={cardBg} border="1px solid" borderColor={borderColor} borderRadius="lg" p={5}>
+    <Box
+      bg={cardBg}
+      border="1px solid"
+      borderColor={borderColor}
+      borderRadius="lg"
+      p={5}
+    >
       <VStack align="start" spacing={1} mb={4}>
-        <Heading size="sm" color={textColor}>{title}</Heading>
-        <Text fontSize="xs" color="gray.500">{subtitle}</Text>
+        <Heading size="sm" color={textColor}>
+          {title}
+        </Heading>
+        <Text fontSize="xs" color="gray.500">
+          {subtitle}
+        </Text>
       </VStack>
       {children}
     </Box>
@@ -317,7 +408,11 @@ function WipTable({
 }) {
   const entries = Object.entries(currentWip);
   if (entries.length === 0) {
-    return <Text color={mutedColor} fontSize="sm">No columns configured</Text>;
+    return (
+      <Text color={mutedColor} fontSize="sm">
+        No columns configured
+      </Text>
+    );
   }
   return (
     <Table variant="simple" size="sm">
@@ -331,20 +426,32 @@ function WipTable({
       </Thead>
       <Tbody>
         {entries.map(([key, col]) => {
-          const atLimit = col.wip !== undefined && col.wip > 0 && col.count >= col.wip;
-          const overLimit = col.wip !== undefined && col.wip > 0 && col.count > col.wip;
+          const atLimit =
+            col.wip !== undefined && col.wip > 0 && col.count >= col.wip;
+          const overLimit =
+            col.wip !== undefined && col.wip > 0 && col.count > col.wip;
           return (
             <Tr key={key}>
               <Td>{col.title}</Td>
-              <Td isNumeric fontWeight="bold">{col.count}</Td>
-              <Td isNumeric color={mutedColor}>{col.wip || '-'}</Td>
+              <Td isNumeric fontWeight="bold">
+                {col.count}
+              </Td>
+              <Td isNumeric color={mutedColor}>
+                {col.wip || '-'}
+              </Td>
               <Td>
                 {overLimit ? (
-                  <Badge colorScheme="red" fontSize="xs">Over Limit</Badge>
+                  <Badge colorScheme="red" fontSize="xs">
+                    Over Limit
+                  </Badge>
                 ) : atLimit ? (
-                  <Badge colorScheme="yellow" fontSize="xs">At Limit</Badge>
+                  <Badge colorScheme="yellow" fontSize="xs">
+                    At Limit
+                  </Badge>
                 ) : (
-                  <Badge colorScheme="green" fontSize="xs">OK</Badge>
+                  <Badge colorScheme="green" fontSize="xs">
+                    OK
+                  </Badge>
                 )}
               </Td>
             </Tr>
@@ -365,7 +472,9 @@ function AgingTable({
   if (wipAge.length === 0) {
     return (
       <Box textAlign="center" py={6}>
-        <Text color={mutedColor} fontSize="sm">No in-progress items</Text>
+        <Text color={mutedColor} fontSize="sm">
+          No in-progress items
+        </Text>
       </Box>
     );
   }
@@ -386,15 +495,23 @@ function AgingTable({
       <Tbody>
         {sorted.map((item) => (
           <Tr key={item.taskId}>
-             <Td maxW="200px">
-               <Text noOfLines={1} title={item.title}>{item.title}</Text>
-             </Td>
+            <Td maxW="200px">
+              <Text noOfLines={1} title={item.title}>
+                {item.title}
+              </Text>
+            </Td>
             <Td>{item.column}</Td>
-            <Td isNumeric fontWeight="bold">{formatAge(item.ageHours)}</Td>
+            <Td isNumeric fontWeight="bold">
+              {formatAge(item.ageHours)}
+            </Td>
             <Td>
               <Badge
                 colorScheme={
-                  item.priority === 'high' ? 'red' : item.priority === 'medium' ? 'yellow' : 'green'
+                  item.priority === 'high'
+                    ? 'red'
+                    : item.priority === 'medium'
+                    ? 'yellow'
+                    : 'green'
                 }
                 fontSize="xs"
               >

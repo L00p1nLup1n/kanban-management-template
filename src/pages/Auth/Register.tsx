@@ -136,7 +136,12 @@ function Register() {
 
           <Text textAlign="center" fontSize="sm" color="gray.600">
             Already have an account?{' '}
-            <ChakraLink as={RouterLink} to="/login" color="blue.500" fontWeight="semibold">
+            <ChakraLink
+              as={RouterLink}
+              to="/login"
+              color="blue.500"
+              fontWeight="semibold"
+            >
               Sign in
             </ChakraLink>
           </Text>

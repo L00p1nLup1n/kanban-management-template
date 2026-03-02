@@ -12,7 +12,8 @@
     "backend:test-connection": "npm --prefix src/backend run test-connection",
     "backend:test-api": "npm --prefix src/backend run test-api",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "prepare": "husky"
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.0.8",
@@ -54,5 +55,17 @@
     "prettier": "2.7.1",
     "typescript": "^4.6.4",
     "vite": "^3.0.7"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx}": [
+      "prettier --write"
+    ],
+    "*.{json,md,css}": [
+      "prettier --write"
+    ]
   }
 }

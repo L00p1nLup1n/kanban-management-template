@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import Router from '../Router';
-import '../index.css';
+import Router from './Router';
+import './main.css';
 import { ChakraProvider } from '@chakra-ui/react';
-import theme from '../config/theme';
+import theme from './theme';
 
 const rootEl = document.getElementById('root');
 if (rootEl) {

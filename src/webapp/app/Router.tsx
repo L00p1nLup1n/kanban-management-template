@@ -1,10 +1,10 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
-import ProtectedRoute from './components/ProtectedRoute';
-import Login from './pages/Auth/Login';
-import Register from './pages/Auth/Register';
-import ProjectsList from './pages/Projects/ProjectsList';
-import ProjectPage from './pages/Project/ProjectPage';
+import { AuthProvider } from '../hooks/useAuth';
+import ProtectedRoute from '../components/ProtectedRoute';
+import Login from '../pages/Auth/Login';
+import Register from '../pages/Auth/Register';
+import ProjectsList from '../pages/Projects/ProjectsList';
+import ProjectPage from '../pages/Project/ProjectPage';
 
 function Router() {
   return (

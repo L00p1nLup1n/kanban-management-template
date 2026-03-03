@@ -71,9 +71,6 @@ This repository now contains a fully functional backend under `src/server/`.
 cd src/server
 npm install
 
-# Database is already initialized with demo data!
-# Demo credentials: demo@kanban.local / demo123
-
 # Start server
 npm start
 
@@ -84,10 +81,10 @@ npm run dev
 ### Available Commands
 
 ```bash
-npm run dev              # Start with auto-reload
-npm run init-db          # Reset database with demo data
+npm run dev:backend      # Quickstart server from project root
+npm run dev              # Start frontend with auto-reload
+npm run init-db          # Run MongoDB and initialize database
 npm run test-connection  # Test MongoDB connection
-npm run test-api         # Test all API endpoints
 ```
 
 Note: The frontend code lives under `src/webapp/` with the app entry point in `src/webapp/app/main.tsx`. The backend is in `src/server/`.

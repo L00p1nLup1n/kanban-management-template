@@ -1,7 +1,8 @@
+import { execSync } from 'child_process';
+import os from 'os';
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
-import bcrypt from 'bcrypt';
 import process from 'process';
 
 // Define schemas inline to avoid TS import issues
@@ -59,11 +60,57 @@ const Task = mongoose.model('Task', TaskSchema);
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
 
+function ensureMongoDB() {
+  if (os.platform() !== 'darwin') {
+    console.log(
+      'Non-macOS detected, skipping Homebrew check. Ensure MongoDB is running.\n',
+    );
+    return;
+  }
+
+  // Check if mongodb-community@6.0 is installed via Homebrew
+  try {
+    execSync('brew list mongodb-community@6.0 2>&1', {
+      encoding: 'utf-8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    });
+  } catch {
+    console.log(
+      'mongodb-community@6.0 not found via Homebrew, skipping auto-start.\n',
+    );
+    return;
+  }
+
+  // Check if it's running, start if not
+  try {
+    const info = JSON.parse(
+      execSync('brew services info mongodb-community@6.0 --json', {
+        encoding: 'utf-8',
+      }),
+    );
+    const isRunning = info[0]?.running;
+    if (!isRunning) {
+      console.log('Starting mongodb-community@6.0 via Homebrew...');
+      execSync('brew services start mongodb-community@6.0', {
+        stdio: 'inherit',
+      });
+      console.log('MongoDB started\n');
+    } else {
+      console.log('MongoDB is already running\n');
+    }
+  } catch (err) {
+    console.log('Could not auto-start MongoDB via Homebrew:', err.message);
+    console.log('Attempting to connect anyway...\n');
+  }
+}
+
 async function initializeDatabase() {
   const MONGO_URI = process.env.MONGO_URI || 'mongodb://localhost:27017/kanban';
 
   try {
     console.log('Initializing database...\n');
+
+    ensureMongoDB();
 
     await mongoose.connect(MONGO_URI);
     console.log('Connected to MongoDB\n');
@@ -75,93 +122,21 @@ async function initializeDatabase() {
     await Task.createIndexes();
     console.log('Indexes created\n');
 
-    // Check if demo user exists
-    const demoEmail = 'demo@kanban.local';
-    let demoUser = await User.findOne({ email: demoEmail });
-
-    if (!demoUser) {
-      console.log('👤 Creating demo user...');
-      const passwordHash = await bcrypt.hash('demo123', 10);
-      demoUser = await User.create({
-        email: demoEmail,
-        passwordHash,
-        name: 'Demo User',
-      });
-      console.log('Demo user created:');
-      console.log('   Email:', demoEmail);
-      console.log('   Password: demo123');
-      console.log('   (Change this in production!)\n');
-    } else {
-      console.log('  Demo user already exists\n');
-    }
-
-    // Check if demo project exists
-    let demoProject = await Project.findOne({ ownerId: demoUser._id });
-
-    if (!demoProject) {
-      console.log('📋 Creating demo project...');
-      demoProject = await Project.create({
-        ownerId: demoUser._id,
-        name: 'My First Kanban Board',
-        description: 'Welcome to your Kanban board!',
-        columns: [
-          { id: 'col-1', key: 'todo', title: 'To do', order: 1 },
-          { id: 'col-2', key: 'inprogress', title: 'In Progress', order: 2 },
-          { id: 'col-3', key: 'done', title: 'Done', order: 3 },
-        ],
-      });
-      console.log(' Demo project created\n');
-
-      // Create sample tasks
-      console.log(' Creating sample tasks...');
-      const sampleTasks = [
-        {
-          projectId: demoProject._id,
-          columnKey: 'todo',
-          title: 'Set up authentication',
-          color: 'blue.300',
-          order: 1000,
-          createdBy: demoUser._id,
-        },
-        {
-          projectId: demoProject._id,
-          columnKey: 'inprogress',
-          title: 'Build task management API',
-          color: 'yellow.300',
-          order: 1000,
-          createdBy: demoUser._id,
-        },
-        {
-          projectId: demoProject._id,
-          columnKey: 'done',
-          title: 'Initialize MongoDB database',
-          color: 'green.300',
-          order: 1000,
-          createdBy: demoUser._id,
-        },
-      ];
-
-      await Task.insertMany(sampleTasks);
-      console.log(' Sample tasks created\n');
-    } else {
-      console.log('  Demo project already exists\n');
-    }
-
     // Show summary
     const userCount = await User.countDocuments();
     const projectCount = await Project.countDocuments();
     const taskCount = await Task.countDocuments();
 
-    console.log(' Database Summary:');
-    console.log(`   Users: ${userCount}`);
-    console.log(`   Projects: ${projectCount}`);
-    console.log(`   Tasks: ${taskCount}`);
-    console.log('\n Database initialized successfully!');
+    console.log('Database Summary:');
+    console.log(`  Users: ${userCount}`);
+    console.log(`  Projects: ${projectCount}`);
+    console.log(`  Tasks: ${taskCount}`);
+    console.log('\nDatabase initialized successfully!');
 
     await mongoose.connection.close();
     process.exit(0);
   } catch (error) {
-    console.error(' Database initialization failed:', error);
+    console.error('Database initialization failed:', error);
     process.exit(1);
   }
 }

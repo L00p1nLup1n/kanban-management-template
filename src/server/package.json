@@ -6,13 +6,10 @@
   "scripts": {
     "dev": "node --watch ./index.js",
     "start": "node ./index.js",
-    "build": "echo 'No build step required for backend skeleton'",
     "init-db": "node ./scripts/init-db.js",
     "test-connection": "node ./scripts/test-connection.js",
-    "test-api": "./test-api.sh",
     "test": "vitest run",
-    "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:watch": "vitest"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",

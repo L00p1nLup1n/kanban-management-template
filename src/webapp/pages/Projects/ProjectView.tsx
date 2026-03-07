@@ -22,7 +22,7 @@ import useProjectTasks, {
 } from '../../hooks/useProjectTasks';
 import useBacklog from '../../hooks/useBacklog';
 import { TaskModel } from '../../utils/models';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback, useRef } from 'react';
 import ColumnSettingsModal from '../../components/Project/ColumnSettingsModal';
 import MembersModal from '../../components/Project/MembersModal';
 import ProjectNavigation from '../../components/Project/ProjectNavigation';
@@ -30,6 +30,7 @@ import ProjectError from '../../components/Project/ProjectError';
 import BacklogTaskItem from '../../components/Backlog/BacklogTaskItem';
 import MoveToColumnDialog from '../../components/Backlog/MoveToColumnDialog';
 import MetricsView from '../../components/Metrics/MetricsView';
+import TaskDetailPanel from '../../components/TaskDetailPanel/TaskDetailPanel';
 import {
   SettingsIcon,
   ArrowBackIcon,
@@ -114,6 +115,19 @@ export default function ProjectView() {
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isMembersOpen, setIsMembersOpen] = useState(false);
 
+  // Task detail panel state
+  const [detailTask, setDetailTask] = useState<TaskModel | null>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const detailTaskRef = useRef(detailTask);
+  detailTaskRef.current = detailTask;
+
+  // Board filter state
+  const [boardSearch, setBoardSearch] = useState('');
+  const [filterPriority, setFilterPriority] = useState<string | null>(null);
+  const [filterAssignee, setFilterAssignee] = useState<string | null>(null);
+  const boardSearchRef = useRef<HTMLInputElement>(null);
+  const boardFilterActive = !!(boardSearch || filterPriority || filterAssignee);
+
   // Backlog-specific state
   const [searchQuery, setSearchQuery] = useState('');
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
@@ -123,6 +137,42 @@ export default function ProjectView() {
   const isOwner = Boolean(
     user && projectOwnerId && getUserId(projectOwnerId) === user.id,
   );
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput =
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
+        target.isContentEditable;
+
+      if (e.key === 'Escape') {
+        if (isDetailOpen) {
+          setIsDetailOpen(false);
+          setDetailTask(null);
+        } else if (boardFilterActive) {
+          setBoardSearch('');
+          setFilterPriority(null);
+          setFilterAssignee(null);
+        }
+        (document.activeElement as HTMLElement)?.blur();
+        return;
+      }
+
+      // Don't trigger shortcuts when typing in inputs
+      if (isInput) return;
+
+      if (e.key === '/' && activeView === 'board') {
+        e.preventDefault();
+        boardSearchRef.current?.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeView, isDetailOpen, boardFilterActive]);
 
   // Listen for member join/remove events and show notifications
   useSocket(projectId, {
@@ -154,7 +204,59 @@ export default function ProjectView() {
 
   useEffect(() => {
     setColsLocal(columns);
+    // Keep detail panel task in sync with latest data
+    const current = detailTaskRef.current;
+    if (current) {
+      for (const col of Object.values(columns)) {
+        const updated = col.find((t) => t.id === current.id);
+        if (updated) {
+          setDetailTask(updated);
+          return;
+        }
+      }
+      // Task was deleted
+      setDetailTask(null);
+      setIsDetailOpen(false);
+    }
   }, [columns]);
+
+  // Filter board tasks based on search + priority + assignee
+  const filteredColsLocal = useMemo(() => {
+    if (!boardFilterActive) return colsLocal;
+    const query = boardSearch.toLowerCase();
+    const filtered: Record<string, TaskModel[]> = {};
+    for (const [key, tasks] of Object.entries(colsLocal)) {
+      filtered[key] = tasks.filter((t) => {
+        if (query && !t.title.toLowerCase().includes(query)) return false;
+        if (filterPriority && t.priority !== filterPriority) return false;
+        if (filterAssignee && t.assigneeId !== filterAssignee) return false;
+        return true;
+      });
+    }
+    return filtered;
+  }, [
+    colsLocal,
+    boardSearch,
+    filterPriority,
+    filterAssignee,
+    boardFilterActive,
+  ]);
+
+  // Build unique assignees from board tasks for filter pills
+  const boardAssignees = useMemo(() => {
+    const seen = new Map<string, string>();
+    for (const tasks of Object.values(colsLocal)) {
+      for (const t of tasks) {
+        if (t.assigneeId && !seen.has(t.assigneeId)) {
+          const display = t.assignee
+            ? t.assignee.name || t.assignee.email || t.assigneeId.slice(-6)
+            : t.assigneeId.slice(-6);
+          seen.set(t.assigneeId, display);
+        }
+      }
+    }
+    return Array.from(seen.entries()).map(([id, name]) => ({ id, name }));
+  }, [colsLocal]);
 
   // Filter backlog tasks based on search query
   const filteredBacklogTasks = useMemo(() => {
@@ -166,6 +268,11 @@ export default function ProjectView() {
         (task.description && task.description.toLowerCase().includes(query)),
     );
   }, [backlogTasks, searchQuery]);
+
+  const handleTaskClick = useCallback((task: TaskModel) => {
+    setDetailTask(task);
+    setIsDetailOpen(true);
+  }, []);
 
   const loading = boardLoading || (activeView === 'backlog' && backlogLoading);
   const error = boardError || backlogError;
@@ -179,7 +286,7 @@ export default function ProjectView() {
   }
 
   // Board handlers
-  const handleCreate = (column: string) => {
+  const handleCreate = (column: string, title?: string) => {
     const colMeta = projectColumns.find(
       (c: ProjectColumnMeta) => c.key === column,
     );
@@ -193,7 +300,7 @@ export default function ProjectView() {
       });
       return;
     } else {
-      createTask({ column, title: 'New task' }).catch((err: any) => {
+      createTask({ column, title: title || 'New task' }).catch((err: any) => {
         const errorMessage =
           err?.response?.data?.error || 'Failed to create task';
         toast({
@@ -413,6 +520,68 @@ export default function ProjectView() {
         backlogCount={backlogTasks.length}
       />
 
+      {/* Board Filter Bar */}
+      {activeView === 'board' && (
+        <HStack mb={3} spacing={3} wrap="wrap">
+          <InputGroup maxW="260px" size="sm">
+            <InputLeftElement pointerEvents="none">
+              <SearchIcon color="gray.400" />
+            </InputLeftElement>
+            <Input
+              ref={boardSearchRef}
+              placeholder="Filter tasks... ( / )"
+              value={boardSearch}
+              onChange={(e) => setBoardSearch(e.target.value)}
+            />
+          </InputGroup>
+          {(['high', 'medium', 'low'] as const).map((p) => (
+            <Badge
+              key={p}
+              variant={filterPriority === p ? p : undefined}
+              cursor="pointer"
+              opacity={filterPriority && filterPriority !== p ? 0.4 : 1}
+              onClick={() =>
+                setFilterPriority((prev) => (prev === p ? null : p))
+              }
+              px={3}
+              py={1}
+              fontSize="xs"
+            >
+              {p}
+            </Badge>
+          ))}
+          {boardAssignees.map((a) => (
+            <Badge
+              key={a.id}
+              variant={filterAssignee === a.id ? 'blue' : undefined}
+              cursor="pointer"
+              opacity={filterAssignee && filterAssignee !== a.id ? 0.4 : 1}
+              onClick={() =>
+                setFilterAssignee((prev) => (prev === a.id ? null : a.id))
+              }
+              px={3}
+              py={1}
+              fontSize="xs"
+            >
+              {a.name}
+            </Badge>
+          ))}
+          {boardFilterActive && (
+            <Button
+              size="xs"
+              variant="ghost"
+              onClick={() => {
+                setBoardSearch('');
+                setFilterPriority(null);
+                setFilterAssignee(null);
+              }}
+            >
+              Clear
+            </Button>
+          )}
+        </HStack>
+      )}
+
       {/* Board View */}
       {activeView === 'board' && (
         <Grid
@@ -435,7 +604,7 @@ export default function ProjectView() {
               column={colMeta.key}
               title={colMeta.title}
               wipLimit={colMeta.wip}
-              tasks={colsLocal[colMeta.key] || []}
+              tasks={filteredColsLocal[colMeta.key] || []}
               onCreate={handleCreate}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
@@ -459,6 +628,7 @@ export default function ProjectView() {
               onReorder={(fromIdx, toIdx) =>
                 handleReorder(colMeta.key, fromIdx, toIdx)
               }
+              onTaskClick={handleTaskClick}
               projectMembers={projectMembers}
               projectOwnerId={projectOwnerId}
             />
@@ -580,6 +750,21 @@ export default function ProjectView() {
         }}
         columns={projectColumns}
         onMove={handleConfirmMoveToColumn}
+      />
+
+      {/* Task Detail Side Panel */}
+      <TaskDetailPanel
+        task={detailTask}
+        isOpen={isDetailOpen}
+        onClose={() => {
+          setIsDetailOpen(false);
+          setDetailTask(null);
+        }}
+        onUpdate={handleUpdate}
+        onDelete={handleDelete}
+        onMoveToBacklog={isOwner ? handleMoveToBacklog : undefined}
+        projectMembers={projectMembers}
+        projectOwnerId={projectOwnerId}
       />
     </Box>
   );

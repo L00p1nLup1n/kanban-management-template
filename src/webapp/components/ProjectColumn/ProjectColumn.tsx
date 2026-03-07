@@ -7,9 +7,10 @@ import {
   IconButton,
   Stack,
   useColorModeValue,
-  Progress,
+  Input,
 } from '@chakra-ui/react';
 import { AddIcon } from '@chakra-ui/icons';
+import { useState, useRef, useCallback } from 'react';
 import Task from '../Task/Task';
 import useColumnDrop from '../../hooks/useColumnDrop';
 import { TaskModel } from '../../utils/models';
@@ -32,9 +33,9 @@ function ProjectColumn({
   onCreate,
   onUpdate,
   onDelete,
-  onMoveToBacklog,
   onDropFrom,
   onReorder,
+  onTaskClick,
   projectMembers,
   projectOwnerId,
   wipLimit,
@@ -44,21 +45,26 @@ function ProjectColumn({
   // user-facing title (optional). If omitted, `column` is used.
   title?: string;
   tasks: TaskModel[];
-  onCreate: (column: string) => void;
+  onCreate: (column: string, title?: string) => void;
   onUpdate: (id: string, patch: Partial<TaskModel>) => void;
   onDelete: (id: string) => void;
   onMoveToBacklog?: (id: string) => void;
   onDropFrom: (from: string, taskId: string) => void;
   onReorder?: (fromIndex: number, toIndex: number) => void;
+  onTaskClick?: (task: TaskModel) => void;
   projectMembers?: (string | PopulatedUser)[];
   projectOwnerId?: string | PopulatedUser | null;
   wipLimit?: number;
 }) {
   const { dropRef, isOver } = useColumnDrop(column, onDropFrom);
   const { user } = useAuth();
+  const [isAdding, setIsAdding] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const inputRef = useRef<HTMLInputElement>(null);
 
   // Color mode values - must be called unconditionally
   const buttonColor = useColorModeValue('gray.800', 'gray.600');
+  const inputBg = useColorModeValue('white', 'gray.800');
 
   // Check if current user is the project owner
   const isOwner =
@@ -76,6 +82,26 @@ function ProjectColumn({
     ? 'yellow'
     : 'gray';
 
+  const startAdding = useCallback(() => {
+    setIsAdding(true);
+    setNewTitle('');
+    setTimeout(() => inputRef.current?.focus(), 0);
+  }, []);
+
+  const submitNewTask = useCallback(() => {
+    const trimmed = newTitle.trim();
+    if (trimmed) {
+      onCreate(column, trimmed);
+    }
+    setIsAdding(false);
+    setNewTitle('');
+  }, [newTitle, column, onCreate]);
+
+  const cancelAdding = useCallback(() => {
+    setIsAdding(false);
+    setNewTitle('');
+  }, []);
+
   const ColumnTasks = tasks.map((task, index) => (
     <Task
       key={task.id}
@@ -86,7 +112,7 @@ function ProjectColumn({
       }
       onUpdate={onUpdate}
       onDelete={onDelete}
-      //   onMoveToBacklog={onMoveToBacklog}
+      onClick={onTaskClick ? () => onTaskClick(task) : undefined}
       projectMembers={projectMembers}
       projectOwnerId={projectOwnerId}
     />
@@ -123,7 +149,7 @@ function ProjectColumn({
             rounded="xl"
             variant="solid"
             fontSize="lg"
-            onClick={() => onCreate(column)}
+            onClick={startAdding}
             aria-label="add-task"
             icon={<AddIcon />}
           />
@@ -144,6 +170,24 @@ function ProjectColumn({
         flexGrow={1}
         minW={0}
       >
+        {isAdding && (
+          <Input
+            ref={inputRef}
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') submitNewTask();
+              if (e.key === 'Escape') cancelAdding();
+            }}
+            onBlur={submitNewTask}
+            placeholder="Task title... (Enter to save)"
+            size="sm"
+            bg={inputBg}
+            rounded="md"
+            fontWeight="semibold"
+            autoFocus
+          />
+        )}
         {ColumnTasks}
       </Stack>
     </Box>

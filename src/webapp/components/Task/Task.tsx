@@ -55,6 +55,7 @@ type TaskProps = {
   onUpdate: (id: TaskModel['id'], patch: Partial<TaskModel>) => void;
   onDelete: (id: TaskModel['id']) => void;
   onDropHover: (i: number, j: number) => void;
+  onClick?: () => void;
   onMoveToBacklog?: (id: TaskModel['id']) => void;
   projectMembers?: (string | PopulatedUser)[];
   projectOwnerId?: string | PopulatedUser | null;
@@ -66,6 +67,7 @@ function Task({
   onUpdate: handleUpdate,
   onDropHover: handleDropHover,
   onDelete: handleDelete,
+  onClick: handleClick,
   onMoveToBacklog: handleMoveToBacklog,
   projectMembers = [],
   projectOwnerId,
@@ -323,6 +325,17 @@ function Task({
     });
   };
 
+  // Task aging: compute days since work reference point
+  const agingBorder = (() => {
+    if (task.completedAt) return undefined; // done tasks don't age
+    const ref_date = task.startedAt || task.committedAt;
+    if (!ref_date) return undefined;
+    const days = (Date.now() - new Date(ref_date).getTime()) / 86400000;
+    if (days > 5) return '3px solid #FC8181'; // red.300
+    if (days > 2) return '3px solid #F6E05E'; // yellow.300
+    return '3px solid #68D391'; // green.300
+  })();
+
   return (
     <ScaleFade in unmountOnExit>
       <Box
@@ -342,6 +355,7 @@ function Task({
         userSelect="none"
         bgColor={task.color}
         opacity={isDragging ? 0.5 : canDrag ? 1 : 0.6}
+        borderLeft={agingBorder}
       >
         <HStack
           position="absolute"
@@ -648,12 +662,13 @@ function Task({
         <Box
           as="div"
           fontWeight="semibold"
-          cursor="inherit"
+          cursor={handleClick ? 'pointer' : 'inherit'}
           p={0}
           minH={55}
           maxH={200}
           color="gray.900"
           lineHeight={1.5}
+          onClick={handleClick}
         >
           {task.title.trim() || 'Untitled task'}
         </Box>
@@ -711,6 +726,7 @@ export default memo(Task, (prev, next) => {
     prev.onDelete === next.onDelete &&
     prev.onDropHover === next.onDropHover &&
     prev.onUpdate === next.onUpdate &&
+    prev.onClick === next.onClick &&
     _.isEqual(prev.projectMembers, next.projectMembers) &&
     _.isEqual(prev.projectOwnerId, next.projectOwnerId)
   ) {

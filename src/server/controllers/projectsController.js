@@ -134,13 +134,15 @@ export const joinProjectByCode = asyncHandler(async (req, res) => {
   try {
     const io = getIO();
     if (io) {
-      const newMember = project.members.find(
-        (m) => m._id.toString() === userId,
-      );
+      const newMemberEntry = project.members.find((m) => {
+        const memberId = m.userId._id || m.userId;
+        return memberId.toString() === userId;
+      });
       io.to(String(project._id)).emit('project:member-joined', {
         projectId: String(project._id),
         memberId: userId,
-        member: newMember,
+        member: newMemberEntry,
+        role: newMemberEntry ? newMemberEntry.role : null,
       });
       io.to(`user:${userId}`).emit('user:joined-project', {
         project,

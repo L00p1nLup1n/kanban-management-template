@@ -18,7 +18,14 @@ const ProjectSchema = new Schema(
     description: { type: String },
     columns: [ColumnSchema],
     // users who joined this project (excluding owner)
-    members: [{ type: Schema.Types.ObjectId, ref: 'User' }],
+    members: [
+      {
+        _id: false,
+        userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        role: { type: String, required: true },
+        joinedAt: { type: Date, default: Date.now },
+      },
+    ],
     // short join code used for inviting members
     joinCode: { type: String, index: true },
   },

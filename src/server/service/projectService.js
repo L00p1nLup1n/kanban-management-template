@@ -12,6 +12,7 @@ import { userIsProjectOwner, userIsProjectMember } from '../utils/authUtils.js';
 import { generateUniqueJoinCode } from '../utils/projectUtils.js';
 import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_COLUMNS_TEMPLATE } from '../helpers/defaultColumns.js';
+import { findById as findUserById } from '../repository/userRepository.js';
 
 export async function listProjectsForUser(userId) {
   const projects = await findProjects(userId);
@@ -82,7 +83,9 @@ export async function joinProject(userId, joinCode) {
     const populated = await findProject(project._id);
     return { outcome: 'already_member', project: populated };
   }
-  const updatedProject = await addMemberToProject(project._id, userId);
+  const user = await findUserById(userId);
+  const role = user ? user.role : 'developer';
+  const updatedProject = await addMemberToProject(project._id, userId, role);
   return { outcome: 'joined', project: updatedProject };
 }
 

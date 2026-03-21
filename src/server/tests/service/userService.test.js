@@ -37,26 +37,37 @@ describe('createUser', () => {
   it('hashes the password before storing', async () => {
     bcrypt.hash.mockResolvedValue('$hashed$');
     userRepo.create.mockResolvedValue({ _id: 'u1', email: 'a@b.com' });
-    await createUser('a@b.com', 'plaintext', 'Alice');
+    await createUser('a@b.com', 'plaintext', 'Alice', 'developer');
     expect(bcrypt.hash).toHaveBeenCalledWith('plaintext', 10);
   });
 
   it('calls create with the hashed password, not the plain one', async () => {
     bcrypt.hash.mockResolvedValue('$hashed$');
     userRepo.create.mockResolvedValue({ _id: 'u1', email: 'a@b.com' });
-    await createUser('a@b.com', 'plaintext', 'Alice');
+    await createUser('a@b.com', 'plaintext', 'Alice', 'developer');
     expect(userRepo.create).toHaveBeenCalledWith(
       'a@b.com',
       '$hashed$',
       'Alice',
+      'developer',
     );
   });
 
   it('returns the created user document', async () => {
-    const fakeUser = { _id: 'u1', email: 'a@b.com', name: 'Alice' };
+    const fakeUser = {
+      _id: 'u1',
+      email: 'a@b.com',
+      name: 'Alice',
+      role: 'developer',
+    };
     bcrypt.hash.mockResolvedValue('$hashed$');
     userRepo.create.mockResolvedValue(fakeUser);
-    const result = await createUser('a@b.com', 'plaintext', 'Alice');
+    const result = await createUser(
+      'a@b.com',
+      'plaintext',
+      'Alice',
+      'developer',
+    );
     expect(result).toBe(fakeUser);
   });
 });

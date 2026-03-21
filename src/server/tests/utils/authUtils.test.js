@@ -10,6 +10,7 @@ import {
   STRANGER_ID,
   makeProject,
   makePopulatedProject,
+  makeMember,
 } from '../helpers/factories.js';
 
 describe('userHasProjectAccess', () => {
@@ -25,20 +26,20 @@ describe('userHasProjectAccess', () => {
     expect(userHasProjectAccess(makePopulatedProject(), OWNER_ID)).toBe(true);
   });
 
-  it('returns true for a member (string id in members array)', () => {
-    const project = makeProject({ members: [MEMBER_ID] });
+  it('returns true for a member (unpopulated userId in members array)', () => {
+    const project = makeProject({ members: [makeMember(MEMBER_ID)] });
     expect(userHasProjectAccess(project, MEMBER_ID)).toBe(true);
   });
 
-  it('returns true for a member (populated _id in members array)', () => {
+  it('returns true for a member (populated userId in members array)', () => {
     const project = makeProject({
-      members: [{ _id: MEMBER_ID, email: 'member@test.com' }],
+      members: [makeMember({ _id: MEMBER_ID, email: 'member@test.com' })],
     });
     expect(userHasProjectAccess(project, MEMBER_ID)).toBe(true);
   });
 
   it('returns false for a stranger', () => {
-    const project = makeProject({ members: [MEMBER_ID] });
+    const project = makeProject({ members: [makeMember(MEMBER_ID)] });
     expect(userHasProjectAccess(project, STRANGER_ID)).toBe(false);
   });
 
@@ -47,7 +48,7 @@ describe('userHasProjectAccess', () => {
   });
 
   it('guards against null entries in members array', () => {
-    const project = makeProject({ members: [null, MEMBER_ID] });
+    const project = makeProject({ members: [null, makeMember(MEMBER_ID)] });
     expect(userHasProjectAccess(project, MEMBER_ID)).toBe(true);
   });
 });
@@ -66,7 +67,7 @@ describe('userIsProjectOwner', () => {
   });
 
   it('returns false for a member who is not the owner', () => {
-    const project = makeProject({ members: [MEMBER_ID] });
+    const project = makeProject({ members: [makeMember(MEMBER_ID)] });
     expect(userIsProjectOwner(project, MEMBER_ID)).toBe(false);
   });
 
@@ -81,7 +82,7 @@ describe('userIsProjectMember', () => {
   });
 
   it('returns true for a member who is not the owner', () => {
-    const project = makeProject({ members: [MEMBER_ID] });
+    const project = makeProject({ members: [makeMember(MEMBER_ID)] });
     expect(userIsProjectMember(project, MEMBER_ID)).toBe(true);
   });
 

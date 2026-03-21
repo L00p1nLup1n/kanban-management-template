@@ -11,11 +11,16 @@ vi.mock('../../repository/projectRepository.js', () => ({
   deleteProjectById: vi.fn(),
 }));
 
+vi.mock('../../repository/userRepository.js', () => ({
+  findById: vi.fn(),
+}));
+
 vi.mock('../../utils/projectUtils.js', () => ({
   generateUniqueJoinCode: vi.fn().mockResolvedValue('newcode'),
 }));
 
 import * as repo from '../../repository/projectRepository.js';
+import * as userRepo from '../../repository/userRepository.js';
 import {
   listProjectsForUser,
   joinProject,
@@ -23,6 +28,7 @@ import {
 } from '../../service/projectService.js';
 import {
   makeProject,
+  makeMember,
   OWNER_ID,
   MEMBER_ID,
   STRANGER_ID,
@@ -44,7 +50,7 @@ describe('listProjectsForUser', () => {
 
   it('strips joinCode for a non-owner member', async () => {
     repo.findProjects.mockResolvedValue([
-      makeProject({ members: [MEMBER_ID] }),
+      makeProject({ members: [makeMember(MEMBER_ID)] }),
     ]);
     const result = await listProjectsForUser(MEMBER_ID);
     expect(result[0]).not.toHaveProperty('joinCode');
@@ -53,7 +59,11 @@ describe('listProjectsForUser', () => {
   it('handles a mixed list of owned and joined projects', async () => {
     repo.findProjects.mockResolvedValue([
       makeProject({ _id: 'p1', ownerId: OWNER_ID }),
-      makeProject({ _id: 'p2', ownerId: STRANGER_ID, members: [OWNER_ID] }),
+      makeProject({
+        _id: 'p2',
+        ownerId: STRANGER_ID,
+        members: [makeMember(OWNER_ID)],
+      }),
     ]);
     const result = await listProjectsForUser(OWNER_ID);
     expect(result[0]).toHaveProperty('joinCode'); // owned
@@ -77,9 +87,9 @@ describe('joinProject', () => {
   });
 
   it('returns already_member with populated project when caller is already a member', async () => {
-    const project = makeProject({ members: [MEMBER_ID] });
+    const project = makeProject({ members: [makeMember(MEMBER_ID)] });
     const populatedProject = makeProject({
-      members: [{ _id: MEMBER_ID, name: 'Bob' }],
+      members: [makeMember({ _id: MEMBER_ID, name: 'Bob' })],
     });
     repo.findProjectByCode.mockResolvedValue(project);
     repo.findProject.mockResolvedValue(populatedProject);
@@ -90,13 +100,18 @@ describe('joinProject', () => {
 
   it('calls addMemberToProject and returns joined for a new user', async () => {
     const project = makeProject();
-    const updatedProject = makeProject({ members: [STRANGER_ID] });
+    const updatedProject = makeProject({ members: [makeMember(STRANGER_ID)] });
     repo.findProjectByCode.mockResolvedValue(project);
+    userRepo.findById.mockResolvedValue({
+      _id: STRANGER_ID,
+      role: 'developer',
+    });
     repo.addMemberToProject.mockResolvedValue(updatedProject);
     const result = await joinProject(STRANGER_ID, 'abc123');
     expect(repo.addMemberToProject).toHaveBeenCalledWith(
       PROJECT_ID,
       STRANGER_ID,
+      'developer',
     );
     expect(result.outcome).toBe('joined');
     expect(result.project).toBe(updatedProject);
@@ -135,7 +150,7 @@ describe('removeProjectMember', () => {
   });
 
   it('calls removeMemberFromProject and returns removed on success', async () => {
-    const project = makeProject({ members: [MEMBER_ID] });
+    const project = makeProject({ members: [makeMember(MEMBER_ID)] });
     const updatedProject = makeProject();
     repo.findProject.mockResolvedValue(project);
     repo.removeMemberFromProject.mockResolvedValue(updatedProject);

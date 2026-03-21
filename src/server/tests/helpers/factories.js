@@ -9,6 +9,15 @@ export const STRANGER_ID = 'stranger-003';
 export const PROJECT_ID = 'proj-001';
 export const TASK_ID = 'task-001';
 
+/**
+ * Build a member entry matching the new Project.members subdocument shape:
+ * { userId, role, joinedAt }
+ * Accepts a plain userId string/object and optional role override.
+ */
+export function makeMember(userId, role = 'developer', joinedAt = new Date()) {
+  return { userId, role, joinedAt };
+}
+
 export const DEFAULT_COLUMNS = [
   { key: 'todo', title: 'To do', order: 1, wip: 0 },
   { key: 'inprogress', title: 'In Progress', order: 2, wip: 0 },

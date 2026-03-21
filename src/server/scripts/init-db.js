@@ -13,6 +13,19 @@ const UserSchema = new Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     name: { type: String },
+    role: {
+      type: String,
+      enum: [
+        'project_manager',
+        'business_analyst',
+        'developer',
+        'designer',
+        'qa_tester',
+        'devops_engineer',
+        'scrum_master',
+      ],
+      required: true,
+    },
   },
   { timestamps: true },
 );
@@ -30,6 +43,15 @@ const ProjectSchema = new Schema(
     name: { type: String, required: true },
     description: { type: String },
     columns: [ColumnSchema],
+    members: [
+      {
+        _id: false,
+        userId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+        role: { type: String, required: true },
+        joinedAt: { type: Date, default: Date.now },
+      },
+    ],
+    joinCode: { type: String, index: true },
   },
   { timestamps: true },
 );

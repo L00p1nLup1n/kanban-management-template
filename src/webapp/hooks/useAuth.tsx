@@ -13,7 +13,12 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (
+    email: string,
+    password: string,
+    name?: string,
+    role?: string,
+  ) => Promise<void>;
   logout: () => void;
   error: string | null;
 }
@@ -46,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             id: String(userObj['id'] || userObj['_id'] || ''),
             email: String(userObj['email'] || ''),
             name: String(userObj['name'] || ''),
+            role: String(userObj['role'] || ''),
           };
           // Keep localStorage in sync with normalized shape
           localStorage.setItem('user', JSON.stringify(normalized));
@@ -76,6 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: String(ru['id'] || ru['_id'] || ''),
         email: String(ru['email'] || ''),
         name: String(ru['name'] || ''),
+        role: String(ru['role'] || ''),
       };
 
       const accessToken = response.data.accessToken as string;
@@ -103,11 +110,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (email: string, password: string, name?: string) => {
+  const register = async (
+    email: string,
+    password: string,
+    name?: string,
+    role?: string,
+  ) => {
     try {
       setError(null);
       setIsLoading(true);
-      const response = await authAPI.register(email, password, name);
+      const response = await authAPI.register(email, password, name, role);
       const respUser = response.data.user as unknown;
       const ru =
         respUser && typeof respUser === 'object'
@@ -117,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         id: String(ru['id'] || ru['_id'] || ''),
         email: String(ru['email'] || ''),
         name: String(ru['name'] || ''),
+        role: String(ru['role'] || ''),
       };
       const accessToken = response.data.accessToken as string;
       localStorage.setItem('accessToken', accessToken);

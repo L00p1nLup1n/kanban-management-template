@@ -57,6 +57,7 @@ export interface User {
   id: string;
   email: string;
   name?: string;
+  role: string;
 }
 
 export interface AuthResponse {
@@ -68,6 +69,13 @@ export interface PopulatedUser {
   _id: string;
   name?: string;
   email: string;
+  role?: string;
+}
+
+export interface ProjectMember {
+  userId: PopulatedUser;
+  role: string;
+  joinedAt?: string;
 }
 
 export interface Project {
@@ -79,7 +87,7 @@ export interface Project {
   createdAt: string;
   updatedAt: string;
   joinCode?: string;
-  members?: (string | PopulatedUser)[];
+  members?: ProjectMember[];
 }
 
 export interface Column {
@@ -164,8 +172,13 @@ export interface ProjectMetrics {
 
 // API methods
 export const authAPI = {
-  register: (email: string, password: string, name?: string) =>
-    apiClient.post<AuthResponse>('/auth/register', { email, password, name }),
+  register: (email: string, password: string, name?: string, role?: string) =>
+    apiClient.post<AuthResponse>('/auth/register', {
+      email,
+      password,
+      name,
+      role,
+    }),
 
   login: (email: string, password: string) =>
     apiClient.post<AuthResponse>('/auth/login', { email, password }),

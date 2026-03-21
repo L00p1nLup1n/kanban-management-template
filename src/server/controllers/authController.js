@@ -7,13 +7,21 @@ import {
   generateTokenForUser,
   getUserTimestamps,
 } from '../service/userService.js';
+import { VALID_ROLES } from '../models/User.js';
 
 export async function register(req, res) {
   try {
-    const { email, password, name } = req.body;
+    const { email, password, name, role } = req.body;
 
     if (!email || !password) {
       throw new ValidationError(400, 'Email and password required');
+    }
+
+    if (!role || !VALID_ROLES.includes(role)) {
+      throw new ValidationError(
+        400,
+        `Role must be one of: ${VALID_ROLES.join(', ')}`,
+      );
     }
 
     // check if user already exist in the database
@@ -21,13 +29,18 @@ export async function register(req, res) {
       throw new ValidationError(409, 'Login failed'); // Generic error message to avoid email enumeration
     }
 
-    const user = await createUser(email, password, name);
+    const user = await createUser(email, password, name, role);
 
     // Generate token
     const accessToken = await generateTokenForUser(user);
 
     return res.status(201).json({
-      user: { id: user._id, email: user.email, name: user.name },
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
       accessToken,
     });
   } catch (err) {
@@ -60,7 +73,12 @@ export async function login(req, res) {
     const accessToken = await generateTokenForUser(user);
 
     return res.json({
-      user: { id: user._id, email: user.email, name: user.name },
+      user: {
+        id: user._id,
+        email: user.email,
+        name: user.name,
+        role: user.role,
+      },
       accessToken,
     });
   } catch (err) {
@@ -85,6 +103,7 @@ export async function me(req, res) {
         id: user._id,
         email: user.email,
         name: user.name,
+        role: user.role,
         createdAt: createdAt,
         updatedAt: updatedAt,
       },

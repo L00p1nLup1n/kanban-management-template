@@ -1,4 +1,15 @@
 /**
+ * Resolve the userId from a member entry (populated or unpopulated).
+ * Members are now { userId, role, joinedAt } objects.
+ * When populated, member.userId is a User document with ._id.
+ * When unpopulated, member.userId is a raw ObjectId.
+ */
+function getMemberUserId(member) {
+  if (!member || !member.userId) return null;
+  return member.userId._id || member.userId;
+}
+
+/**
  * Check if a user has access to a project (owner or member)
  * @param {Object} project - Project document from MongoDB
  * @param {string} userId - User ID to check
@@ -11,8 +22,8 @@ export function userHasProjectAccess(project, userId) {
   const isMember =
     Array.isArray(project.members) &&
     project.members.some((m) => {
-      if (!m) return false; // guard against null members
-      const memberId = m._id || m;
+      const memberId = getMemberUserId(m);
+      if (!memberId) return false;
       return memberId.toString() === String(userId);
     });
   return isOwner || isMember;
@@ -42,4 +53,21 @@ export function userIsProjectMember(project, userId) {
     !userIsProjectOwner(project, userId) &&
     userHasProjectAccess(project, userId)
   );
+}
+
+/**
+ * Get the role of a user within a project's members array.
+ * Returns null if the user is not a member (or is the owner).
+ * @param {Object} project - Project document from MongoDB
+ * @param {string} userId - User ID to look up
+ * @returns {string|null}
+ */
+export function getUserProjectRole(project, userId) {
+  if (!project || !Array.isArray(project.members)) return null;
+  const entry = project.members.find((m) => {
+    const memberId = getMemberUserId(m);
+    if (!memberId) return false;
+    return memberId.toString() === String(userId);
+  });
+  return entry ? entry.role : null;
 }

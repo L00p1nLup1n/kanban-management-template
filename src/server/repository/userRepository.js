@@ -8,8 +8,8 @@ import User from '../models/User.js';
  * @param {string} [name] - User's display name (optional)
  * @returns {Promise<Object>} Promise that resolves to the created User document
  */
-export function create(email, passwordHash, name) {
-  return User.create({ email, passwordHash, name });
+export function create(email, passwordHash, name, role) {
+  return User.create({ email, passwordHash, name, role });
 }
 
 /**

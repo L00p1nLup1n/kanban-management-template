@@ -22,12 +22,12 @@ const JWT_EXPIRES_IN = '30m';
  * @returns {Promise<Object>} Promise that resolves to the created User document from MongoDB
  * @throws {Error} If user creation fails or email already exists
  */
-export async function createUser(email, password, name) {
+export async function createUser(email, password, name, role) {
   // Hash password
   const passwordHash = await bcrypt.hash(password, 10);
 
   // Create user
-  const user = await create(email, passwordHash, name);
+  const user = await create(email, passwordHash, name, role);
 
   return user;
 }

@@ -7,6 +7,7 @@ import {
   FormLabel,
   Heading,
   Input,
+  Select,
   Stack,
   Text,
   useColorModeValue,
@@ -16,12 +17,14 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
+import { IT_ROLES } from '../../utils/roles';
 
 function Register() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [name, setName] = useState('');
+  const [role, setRole] = useState('');
   const [localError, setLocalError] = useState<string | null>(null);
   const { register, isLoading } = useAuth();
 
@@ -31,6 +34,11 @@ function Register() {
 
     if (!email || !password || !confirmPassword) {
       setLocalError('Please fill in all required fields');
+      return;
+    }
+
+    if (!role) {
+      setLocalError('Please select your IT role');
       return;
     }
 
@@ -45,7 +53,7 @@ function Register() {
     }
 
     try {
-      await register(email, password, name || undefined);
+      await register(email, password, name || undefined, role);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setLocalError(message);
@@ -87,6 +95,21 @@ function Register() {
                   placeholder="Your name"
                   autoComplete="name"
                 />
+              </FormControl>
+
+              <FormControl isRequired>
+                <FormLabel>Your Role</FormLabel>
+                <Select
+                  placeholder="Select your IT role"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                >
+                  {IT_ROLES.map((r) => (
+                    <option key={r.value} value={r.value}>
+                      {r.label}
+                    </option>
+                  ))}
+                </Select>
               </FormControl>
 
               <FormControl isRequired>

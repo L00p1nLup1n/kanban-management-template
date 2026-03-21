@@ -13,7 +13,7 @@ import { AddIcon } from '@chakra-ui/icons';
 import Task from '../Task/Task';
 import useColumnDrop from '../../hooks/useColumnDrop';
 import { TaskModel } from '../../utils/models';
-import { PopulatedUser } from '../../api/client';
+import { PopulatedUser, ProjectMember } from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';
 
 // Helper to get user ID from PopulatedUser or string
@@ -50,7 +50,7 @@ function ProjectColumn({
   onMoveToBacklog?: (id: string) => void;
   onDropFrom: (from: string, taskId: string) => void;
   onReorder?: (fromIndex: number, toIndex: number) => void;
-  projectMembers?: (string | PopulatedUser)[];
+  projectMembers?: ProjectMember[];
   projectOwnerId?: string | PopulatedUser | null;
   wipLimit?: number;
 }) {

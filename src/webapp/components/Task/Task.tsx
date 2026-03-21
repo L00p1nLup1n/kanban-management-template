@@ -37,7 +37,7 @@ import { AutoResizeTextArea } from '../AutoResizeTextArea/AutoResizeTextArea';
 import { useTaskDragAndDrop } from '../../hooks/useTaskDragAndDrop';
 import _ from 'lodash';
 import { TaskModel } from '../../utils/models';
-import { PopulatedUser } from '../../api/client';
+import { PopulatedUser, ProjectMember } from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';
 
 // Helper to get user ID from PopulatedUser or string
@@ -56,7 +56,7 @@ type TaskProps = {
   onDelete: (id: TaskModel['id']) => void;
   onDropHover: (i: number, j: number) => void;
   onMoveToBacklog?: (id: TaskModel['id']) => void;
-  projectMembers?: (string | PopulatedUser)[];
+  projectMembers?: ProjectMember[];
   projectOwnerId?: string | PopulatedUser | null;
 };
 
@@ -225,11 +225,11 @@ function Task({
   }
 
   projectMembers.forEach((member) => {
-    const memberId = getUserId(member);
+    const memberId = getUserId(member.userId);
     if (memberId && !allMembers.find((m) => m.id === memberId)) {
       allMembers.push({
         id: memberId,
-        display: getUserDisplay(member),
+        display: getUserDisplay(member.userId),
       });
     }
   });

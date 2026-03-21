@@ -4,6 +4,7 @@ import {
   tasksAPI,
   Column as APIColumn,
   PopulatedUser,
+  ProjectMember,
 } from '../api/client';
 import useSocket from './useSocket';
 import { ColumnType } from '../utils/enums';
@@ -71,9 +72,7 @@ export default function useProjectTasks(projectId: string) {
   const [projectOwnerId, setProjectOwnerId] = useState<
     string | PopulatedUser | null
   >(null);
-  const [projectMembers, setProjectMembers] = useState<
-    (string | PopulatedUser)[]
-  >([]);
+  const [projectMembers, setProjectMembers] = useState<ProjectMember[]>([]);
   const [joinCode, setJoinCode] = useState<string | undefined>(undefined);
 
   const load = useCallback(async () => {

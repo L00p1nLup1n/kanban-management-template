@@ -24,6 +24,30 @@ import { Link as RouterLink } from 'react-router-dom';
 import DarkModeIconButton from '../../components/DarkModeIconButton/DarkModeIconButton';
 import useUserSocket from '../../hooks/useUserSocket';
 import { DeleteIcon } from '@chakra-ui/icons';
+import { getRoleLabel, getRoleColor } from '../../utils/roles';
+import { ProjectMember } from '../../api/client';
+
+function RoleBadge({
+  members,
+  currentUserId,
+}: {
+  members?: ProjectMember[];
+  currentUserId: string;
+}) {
+  const member = members?.find(
+    (m) =>
+      String(m.userId?._id) === currentUserId ||
+      String(m.userId) === currentUserId,
+  );
+  if (member?.role) {
+    return (
+      <Badge colorScheme={getRoleColor(member.role)}>
+        {getRoleLabel(member.role)}
+      </Badge>
+    );
+  }
+  return <Badge colorScheme="gray">Unknown Role</Badge>;
+}
 
 function ProjectsList() {
   const { user, logout } = useAuth();
@@ -382,10 +406,11 @@ function ProjectsList() {
                         {/* Role Badge */}
                         {isOwner ? (
                           <Badge colorScheme="purple">Owner</Badge>
-                        ) : p.members && p.members.includes(currentUserId) ? (
-                          <Badge>Member</Badge>
                         ) : (
-                          <Badge colorScheme="gray">Unknown Role</Badge>
+                          <RoleBadge
+                            members={p.members}
+                            currentUserId={currentUserId}
+                          />
                         )}
 
                         {/* Delete Button - ONLY for owners */}

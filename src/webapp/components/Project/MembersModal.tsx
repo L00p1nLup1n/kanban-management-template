@@ -26,14 +26,15 @@ import {
 } from '@chakra-ui/react';
 import { CopyIcon, CloseIcon } from '@chakra-ui/icons';
 import { useAuth } from '../../hooks/useAuth';
-import { PopulatedUser, projectsAPI } from '../../api/client';
+import { PopulatedUser, ProjectMember, projectsAPI } from '../../api/client';
+import { getRoleColor, getRoleLabel } from '../../utils/roles';
 import { useState, useRef } from 'react';
 
 interface MembersModalProps {
   isOpen: boolean;
   onClose: () => void;
   ownerId: string | PopulatedUser | null;
-  members: (string | PopulatedUser)[];
+  members: ProjectMember[];
   joinCode?: string;
   projectId: string;
   onMemberRemoved?: () => void;
@@ -72,7 +73,7 @@ export default function MembersModal({
   const emptyTextColor = useColorModeValue('gray.400', 'gray.500');
   const joinCodeBorderColor = useColorModeValue('gray.200', 'gray.700');
 
-  // Helper function to get user display name
+  // Helper function to get user display name from owner (string | PopulatedUser)
   const getDisplayName = (
     userObj: string | PopulatedUser | null | undefined,
     isCurrentUser: boolean,
@@ -83,7 +84,7 @@ export default function MembersModal({
     return userObj.name || userObj.email || `User ${userObj._id.slice(-6)}`;
   };
 
-  // Helper function to get user ID
+  // Helper function to get user ID from owner (string | PopulatedUser)
   const getUserId = (
     userObj: string | PopulatedUser | null | undefined,
   ): string => {
@@ -92,12 +93,29 @@ export default function MembersModal({
     return userObj._id;
   };
 
+  // Helper functions for ProjectMember
+  const getMemberDisplayName = (
+    member: ProjectMember,
+    isCurrentUser: boolean,
+  ): string => {
+    if (isCurrentUser) return 'You';
+    return (
+      member.userId.name ||
+      member.userId.email ||
+      `User ${member.userId._id.slice(-6)}`
+    );
+  };
+
+  const getMemberId = (member: ProjectMember): string => {
+    return member.userId._id || String(member.userId);
+  };
+
   const ownerId_str = getUserId(ownerId);
   const isOwnerCurrentUser = ownerId_str === user?.id;
 
-  const handleRemoveMemberClick = (member: string | PopulatedUser) => {
-    const memberId = getUserId(member);
-    const memberName = getDisplayName(member, false);
+  const handleRemoveMemberClick = (member: ProjectMember) => {
+    const memberId = getMemberId(member);
+    const memberName = getMemberDisplayName(member, false);
     setMemberToRemove({ id: memberId, name: memberName });
     onAlertOpen();
   };
@@ -162,7 +180,14 @@ export default function MembersModal({
                 borderRadius="md"
               >
                 <Text>{getDisplayName(ownerId, isOwnerCurrentUser)}</Text>
-                <Badge colorScheme="purple">Owner</Badge>
+                <HStack spacing={2}>
+                  {ownerId && typeof ownerId !== 'string' && ownerId.role && (
+                    <Badge colorScheme={getRoleColor(ownerId.role)}>
+                      {getRoleLabel(ownerId.role)}
+                    </Badge>
+                  )}
+                  <Badge colorScheme="purple">Owner</Badge>
+                </HStack>
               </HStack>
             </Box>
 
@@ -180,7 +205,7 @@ export default function MembersModal({
                   </Text>
                 ) : (
                   members.map((member) => {
-                    const memberId = getUserId(member);
+                    const memberId = getMemberId(member);
                     const isMemberCurrentUser = memberId === user?.id;
                     return (
                       <HStack
@@ -191,9 +216,14 @@ export default function MembersModal({
                         borderRadius="md"
                       >
                         <Text>
-                          {getDisplayName(member, isMemberCurrentUser)}
+                          {getMemberDisplayName(member, isMemberCurrentUser)}
                         </Text>
                         <HStack spacing={2}>
+                          {member.role && (
+                            <Badge colorScheme={getRoleColor(member.role)}>
+                              {getRoleLabel(member.role)}
+                            </Badge>
+                          )}
                           <Badge>Member</Badge>
                           {isOwnerCurrentUser && (
                             <IconButton

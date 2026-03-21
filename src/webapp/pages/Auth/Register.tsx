@@ -7,7 +7,10 @@ import {
   FormLabel,
   Heading,
   Input,
-  Select,
+  Menu,
+  MenuButton,
+  MenuList,
+  MenuItem,
   Stack,
   Text,
   useColorModeValue,
@@ -99,17 +102,26 @@ function Register() {
 
               <FormControl isRequired>
                 <FormLabel>Your Role</FormLabel>
-                <Select
-                  placeholder="Select your IT role"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                >
-                  {IT_ROLES.map((r) => (
-                    <option key={r.value} value={r.value}>
-                      {r.label}
-                    </option>
-                  ))}
-                </Select>
+                <Menu matchWidth>
+                  <MenuButton
+                    as={Button}
+                    variant="outline"
+                    w="100%"
+                    textAlign="left"
+                    fontWeight="normal"
+                  >
+                    {role
+                      ? IT_ROLES.find((r) => r.value === role)?.label
+                      : 'Select your IT role'}
+                  </MenuButton>
+                  <MenuList>
+                    {IT_ROLES.map((r) => (
+                      <MenuItem key={r.value} onClick={() => setRole(r.value)}>
+                        {r.label}
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
               </FormControl>
 
               <FormControl isRequired>

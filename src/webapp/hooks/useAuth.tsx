@@ -16,8 +16,8 @@ interface AuthContextType {
   register: (
     email: string,
     password: string,
+    role: string,
     name?: string,
-    role?: string,
   ) => Promise<void>;
   logout: () => void;
   error: string | null;
@@ -113,13 +113,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const register = async (
     email: string,
     password: string,
+    role: string,
     name?: string,
-    role?: string,
   ) => {
     try {
       setError(null);
       setIsLoading(true);
-      const response = await authAPI.register(email, password, name, role);
+      const response = await authAPI.register(email, password, role, name);
       const respUser = response.data.user as unknown;
       const ru =
         respUser && typeof respUser === 'object'

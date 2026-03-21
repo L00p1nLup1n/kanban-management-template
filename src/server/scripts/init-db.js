@@ -4,6 +4,7 @@ import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import path from 'path';
 import process from 'process';
+import { VALID_ROLES } from '../../shared/roles.js';
 
 // Define schemas inline to avoid TS import issues
 const { Schema } = mongoose;
@@ -15,15 +16,7 @@ const UserSchema = new Schema(
     name: { type: String },
     role: {
       type: String,
-      enum: [
-        'project_manager',
-        'business_analyst',
-        'developer',
-        'designer',
-        'qa_tester',
-        'devops_engineer',
-        'scrum_master',
-      ],
+      enum: VALID_ROLES,
       required: true,
     },
   },

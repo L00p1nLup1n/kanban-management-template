@@ -46,7 +46,7 @@ function RoleBadge({
       </Badge>
     );
   }
-  return <Badge colorScheme="gray">Unknown Role</Badge>;
+  return <Badge colorScheme="gray">Member</Badge>;
 }
 
 function ProjectsList() {

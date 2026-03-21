@@ -62,12 +62,12 @@ export function userIsProjectMember(project, userId) {
  * @param {string} userId - User ID to look up
  * @returns {string|null}
  */
-export function getUserProjectRole(project, userId) {
-  if (!project || !Array.isArray(project.members)) return null;
-  const entry = project.members.find((m) => {
-    const memberId = getMemberUserId(m);
-    if (!memberId) return false;
-    return memberId.toString() === String(userId);
-  });
-  return entry ? entry.role : null;
-}
+// export function getUserProjectRole(project, userId) {
+//   if (!project || !Array.isArray(project.members)) return null;
+//   const entry = project.members.find((m) => {
+//     const memberId = getMemberUserId(m);
+//     if (!memberId) return false;
+//     return memberId.toString() === String(userId);
+//   });
+//   return entry ? entry.role : null;
+// }

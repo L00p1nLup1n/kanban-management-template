@@ -7,7 +7,7 @@ import {
   generateTokenForUser,
   getUserTimestamps,
 } from '../service/userService.js';
-import { VALID_ROLES } from '../models/User.js';
+import { VALID_ROLES } from '../../shared/roles.js';
 
 export async function register(req, res) {
   try {
@@ -18,10 +18,7 @@ export async function register(req, res) {
     }
 
     if (!role || !VALID_ROLES.includes(role)) {
-      throw new ValidationError(
-        400,
-        `Role must be one of: ${VALID_ROLES.join(', ')}`,
-      );
+      throw new ValidationError(400, `Invalid role`);
     }
 
     // check if user already exist in the database

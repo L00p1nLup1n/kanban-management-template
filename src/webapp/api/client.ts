@@ -69,7 +69,7 @@ export interface PopulatedUser {
   _id: string;
   name?: string;
   email: string;
-  role?: string;
+  role: string;
 }
 
 export interface ProjectMember {
@@ -172,7 +172,7 @@ export interface ProjectMetrics {
 
 // API methods
 export const authAPI = {
-  register: (email: string, password: string, name?: string, role?: string) =>
+  register: (email: string, password: string, role: string, name?: string) =>
     apiClient.post<AuthResponse>('/auth/register', {
       email,
       password,

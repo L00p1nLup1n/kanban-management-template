@@ -56,7 +56,7 @@ function Register() {
     }
 
     try {
-      await register(email, password, name || undefined, role);
+      await register(email, password, role, name || undefined);
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : String(err);
       setLocalError(message);

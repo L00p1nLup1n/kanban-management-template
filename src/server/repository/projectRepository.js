@@ -41,13 +41,9 @@ export async function deleteProjectById(projectId) {
 }
 
 export async function addMemberToProject(projectId, userId, role) {
-  return await Project.findByIdAndUpdate(
-    projectId,
-    {
-      $addToSet: {
-        members: { userId, role, joinedAt: new Date() },
-      },
-    },
+  return await Project.findOneAndUpdate(
+    { _id: projectId, 'members.userId': { $ne: userId } },
+    { $push: { members: { userId, role, joinedAt: new Date() } } },
     { new: true },
   )
     .populate('ownerId', 'name email')

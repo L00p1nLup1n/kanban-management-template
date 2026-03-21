@@ -99,6 +99,9 @@ export default function MembersModal({
     isCurrentUser: boolean,
   ): string => {
     if (isCurrentUser) return 'You';
+    if (!member.userId || typeof member.userId === 'string') {
+      return `User ${String(member.userId).slice(-6)}`;
+    }
     return (
       member.userId.name ||
       member.userId.email ||
@@ -107,7 +110,9 @@ export default function MembersModal({
   };
 
   const getMemberId = (member: ProjectMember): string => {
-    return member.userId._id || String(member.userId);
+    if (!member.userId) return '';
+    if (typeof member.userId === 'string') return member.userId;
+    return member.userId._id;
   };
 
   const ownerId_str = getUserId(ownerId);

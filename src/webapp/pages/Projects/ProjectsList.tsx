@@ -36,8 +36,8 @@ function RoleBadge({
 }) {
   const member = members?.find(
     (m) =>
-      String(m.userId?._id) === currentUserId ||
-      String(m.userId) === currentUserId,
+      (typeof m.userId === 'string' ? m.userId : m.userId?._id) ===
+      currentUserId,
   );
   if (member?.role) {
     return (

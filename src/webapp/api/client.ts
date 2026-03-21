@@ -73,7 +73,7 @@ export interface PopulatedUser {
 }
 
 export interface ProjectMember {
-  userId: PopulatedUser;
+  userId: PopulatedUser | string;
   role: string;
   joinedAt?: string;
 }

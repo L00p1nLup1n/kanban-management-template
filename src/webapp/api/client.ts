@@ -366,6 +366,46 @@ export const myTasksAPI = {
   list: () => apiClient.get<{ projects: MyTasksProject[] }>('/my-tasks'),
 };
 
+// Notification types
+export interface Notification {
+  _id: string;
+  recipientId: string;
+  type:
+    | 'invitation'
+    | 'task_assigned'
+    | 'member_joined'
+    | 'member_removed'
+    | 'project_updated'
+    | 'general';
+  title: string;
+  message?: string;
+  isRead: boolean;
+  metadata?: Record<string, unknown>;
+  actionUrl?: string;
+  expiresAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const notificationsAPI = {
+  list: (params?: { limit?: number; offset?: number; unreadOnly?: boolean }) =>
+    apiClient.get<{ notifications: Notification[]; unreadCount: number }>(
+      '/notifications',
+      { params },
+    ),
+
+  unreadCount: () =>
+    apiClient.get<{ count: number }>('/notifications/unread-count'),
+
+  markRead: (notificationId: string) =>
+    apiClient.patch<Notification>(`/notifications/${notificationId}/read`),
+
+  markAllRead: () => apiClient.patch('/notifications/read-all'),
+
+  delete: (notificationId: string) =>
+    apiClient.delete(`/notifications/${notificationId}`),
+};
+
 export const metricsAPI = {
   get: (projectId: string, days?: number) =>
     apiClient.get<{ metrics: ProjectMetrics }>(

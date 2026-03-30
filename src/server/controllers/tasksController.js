@@ -18,6 +18,7 @@ import {
   TaskOutcome,
 } from '../service/taskService.js';
 import { getIO } from '../socket.js';
+import { createAndDeliverNotification } from '../service/notificationService.js';
 
 function emitSocket(projectId, event, data) {
   try {
@@ -77,6 +78,27 @@ export const updateTask = asyncHandler(async (req, res) => {
     throw new TaskError(403, result.message);
 
   emitSocket(projectId, 'task:updated', { task: result.task });
+
+  // Notify assignee when task is assigned to them
+  const assigneeId = req.body.assigneeId;
+  if (assigneeId && assigneeId !== req.userId) {
+    try {
+      await createAndDeliverNotification({
+        recipientId: assigneeId,
+        type: 'task_assigned',
+        title: `You were assigned to "${result.task.title}"`,
+        metadata: {
+          projectId,
+          taskId,
+          taskTitle: result.task.title,
+        },
+        actionUrl: `/projects/${projectId}`,
+      });
+    } catch (e) {
+      console.warn('Notification error (updateTask assignment):', e);
+    }
+  }
+
   return res.json({ task: result.task });
 });
 

@@ -14,6 +14,8 @@ import {
   userIsProjectOwner,
 } from '../utils/authUtils.js';
 import { getIO } from '../socket.js';
+import { createAndDeliverNotification } from '../service/notificationService.js';
+import { findById as findUserById } from '../repository/userRepository.js';
 
 export const listProjects = asyncHandler(async (req, res) => {
   const userId = req.userId;
@@ -153,6 +155,27 @@ export const joinProjectByCode = asyncHandler(async (req, res) => {
   } catch (e) {
     console.warn('Socket emit error (joinProjectByCode):', e);
   }
+
+  // Notify the project owner that a new member joined
+  try {
+    const joiner = await findUserById(userId);
+    const joinerName = joiner?.name || joiner?.email || 'Someone';
+    const ownerId = project.ownerId._id || project.ownerId;
+    await createAndDeliverNotification({
+      recipientId: ownerId,
+      type: 'member_joined',
+      title: `${joinerName} joined ${project.name}`,
+      metadata: {
+        projectId: String(project._id),
+        memberId: userId,
+        memberName: joinerName,
+      },
+      actionUrl: `/projects/${project._id}`,
+    });
+  } catch (e) {
+    console.warn('Notification error (joinProjectByCode):', e);
+  }
+
   return res.json({ project, message: 'Joined project' });
 });
 
@@ -193,6 +216,18 @@ export const removeMember = asyncHandler(async (req, res) => {
     }
   } catch (e) {
     console.warn('Socket emit error (removeMember):', e);
+  }
+
+  // Notify the removed member
+  try {
+    await createAndDeliverNotification({
+      recipientId: memberId,
+      type: 'member_removed',
+      title: `You were removed from ${project.name}`,
+      metadata: { projectId: String(project._id), projectName: project.name },
+    });
+  } catch (e) {
+    console.warn('Notification error (removeMember):', e);
   }
 
   return res.json({ project, message: 'Member removed successfully' });

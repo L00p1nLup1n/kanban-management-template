@@ -38,6 +38,7 @@ const PowerIcon = createIcon({
 import { useAuth } from '../../hooks/useAuth';
 import DarkModeIconButton from '../DarkModeIconButton/DarkModeIconButton';
 import CreateProjectModal from './CreateProjectModal';
+import NotificationBell from '../Notifications/NotificationBell';
 
 export const SIDEBAR_WIDTH_EXPANDED = 240;
 export const SIDEBAR_WIDTH_COLLAPSED = 60;
@@ -92,12 +93,15 @@ function Sidebar({ onProjectCreated, isCollapsed, onToggle }: SidebarProps) {
         transition="width 0.2s ease"
         overflow="hidden"
       >
-        {/* Collapse toggle */}
+        {/* Top bar — collapse toggle + notifications */}
         <Box
           display="flex"
-          justifyContent={isCollapsed ? 'center' : 'flex-end'}
+          justifyContent={isCollapsed ? 'center' : 'space-between'}
+          alignItems="center"
           p={1}
+          px={isCollapsed ? 1 : 2}
         >
+          <NotificationBell isCollapsed={isCollapsed} />
           <IconButton
             aria-label={isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             icon={isCollapsed ? <ChevronRightIcon /> : <ChevronLeftIcon />}

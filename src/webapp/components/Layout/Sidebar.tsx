@@ -108,29 +108,31 @@ function Sidebar({ onProjectCreated, isCollapsed, onToggle }: SidebarProps) {
         </Box>
 
         {/* Top section */}
-        <VStack spacing={2} px={isCollapsed ? 2 : 4} pb={2} align="stretch">
-          {isCollapsed ? (
-            <Tooltip label="New Project" placement="right">
-              <IconButton
-                aria-label="New Project"
-                icon={<AddIcon />}
+        {isPM && (
+          <VStack spacing={2} px={isCollapsed ? 2 : 4} pb={2} align="stretch">
+            {isCollapsed ? (
+              <Tooltip label="New Project" placement="right">
+                <IconButton
+                  aria-label="New Project"
+                  icon={<AddIcon />}
+                  colorScheme="blue"
+                  size="sm"
+                  onClick={onOpen}
+                />
+              </Tooltip>
+            ) : (
+              <Button
+                leftIcon={<AddIcon />}
                 colorScheme="blue"
                 size="sm"
                 onClick={onOpen}
-              />
-            </Tooltip>
-          ) : (
-            <Button
-              leftIcon={<AddIcon />}
-              colorScheme="blue"
-              size="sm"
-              onClick={onOpen}
-              width="full"
-            >
-              New Project
-            </Button>
-          )}
-        </VStack>
+                width="full"
+              >
+                New Project
+              </Button>
+            )}
+          </VStack>
+        )}
 
         <Divider />
 

@@ -1,5 +1,6 @@
 import express from 'express';
 import { authenticate } from '../middleware/auth.js';
+import { requireRole } from '../middleware/requireRole.js';
 import {
   listProjects,
   getProject,
@@ -16,7 +17,7 @@ const router = express.Router();
 router.use(authenticate);
 
 router.get('/', listProjects);
-router.post('/', createProject);
+router.post('/', requireRole('project_manager'), createProject);
 router.post('/join', joinProjectByCode);
 router.get('/:projectId', getProject);
 router.patch('/:projectId', updateProject);

@@ -77,7 +77,7 @@ export async function verifyCredentials(user, password) {
  * @throws {Error} If token generation fails.
  */
 export async function generateTokenForUser(user) {
-  return jwt.sign({ userId: user._id }, JWT_SECRET, {
+  return jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, {
     expiresIn: JWT_EXPIRES_IN,
   });
 }

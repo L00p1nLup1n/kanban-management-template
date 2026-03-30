@@ -11,6 +11,7 @@ import tasksRoutes from './routes/tasks.js';
 import metricsRoutes from './routes/metrics.js';
 import dashboardRoutes from './routes/dashboard.js';
 import myTasksRoutes from './routes/myTasks.js';
+import notificationRoutes from './routes/notifications.js';
 import process from 'process';
 
 dotenv.config({ path: path.resolve(process.cwd(), '.env') });
@@ -36,6 +37,7 @@ app.use('/api/v1/projects', tasksRoutes); // tasks are nested under projects
 app.use('/api/v1/projects', metricsRoutes); // flow metrics nested under projects
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/my-tasks', myTasksRoutes);
+app.use('/api/v1/notifications', notificationRoutes);
 
 // Custom error class handler
 app.use((err, req, res, next) => {

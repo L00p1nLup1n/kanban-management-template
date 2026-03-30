@@ -273,6 +273,99 @@ export const tasksAPI = {
     ),
 };
 
+// Dashboard types
+export interface DashboardProjectSummary {
+  totalTasks: number;
+  boardTasks: number;
+  backlogTasks: number;
+  completedInPeriod: number;
+  inProgress: number;
+}
+
+export interface DashboardWipConcern {
+  column: string;
+  title: string;
+  count: number;
+  limit: number;
+}
+
+export interface DashboardAgingTask {
+  taskId: string;
+  title: string;
+  column: string;
+  ageHours: number;
+  priority: string;
+}
+
+export interface DashboardProject {
+  projectId: string;
+  name: string;
+  role: 'owner' | 'member';
+  health: 'on_track' | 'at_risk' | 'blocked';
+  healthReasons: string[];
+  summary: DashboardProjectSummary;
+  cycleTime: MetricsStats;
+  throughputAvg: number;
+  wipConcerns: DashboardWipConcern[];
+  agingTasks: DashboardAgingTask[];
+}
+
+export interface DashboardAggregated {
+  totalTasks: number;
+  totalInProgress: number;
+  totalCompleted: number;
+  totalBacklog: number;
+  projectCount: number;
+}
+
+export interface DashboardDeadline {
+  taskId: string;
+  title: string;
+  projectId: string;
+  projectName: string;
+  dueDate: string;
+  daysUntilDue: number;
+  priority: string;
+  assigneeName: string | null;
+}
+
+export interface TeamMemberCapacity {
+  userId: string;
+  name: string;
+  role: string;
+  assignments: Array<{
+    projectId: string;
+    projectName: string;
+    taskCount: number;
+  }>;
+  totalTasks: number;
+}
+
+export interface DashboardData {
+  projects: DashboardProject[];
+  aggregated: DashboardAggregated;
+  upcomingDeadlines: DashboardDeadline[];
+  teamCapacity: TeamMemberCapacity[];
+}
+
+export const dashboardAPI = {
+  get: (days?: number) =>
+    apiClient.get<{ dashboard: DashboardData }>(
+      `/dashboard${days ? `?days=${days}` : ''}`,
+    ),
+};
+
+export interface MyTasksProject {
+  projectId: string;
+  projectName: string;
+  columns: Column[];
+  tasks: Task[];
+}
+
+export const myTasksAPI = {
+  list: () => apiClient.get<{ projects: MyTasksProject[] }>('/my-tasks'),
+};
+
 export const metricsAPI = {
   get: (projectId: string, days?: number) =>
     apiClient.get<{ metrics: ProjectMetrics }>(

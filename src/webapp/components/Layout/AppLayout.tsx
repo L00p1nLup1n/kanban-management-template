@@ -8,7 +8,7 @@ import Sidebar, {
 
 function AppLayout() {
   const navigate = useNavigate();
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
 
   const sidebarWidth = isCollapsed
     ? SIDEBAR_WIDTH_COLLAPSED

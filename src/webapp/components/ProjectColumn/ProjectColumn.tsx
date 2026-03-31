@@ -4,32 +4,19 @@ import {
   Box,
   Flex,
   Heading,
-  IconButton,
   Stack,
   useColorModeValue,
   Progress,
 } from '@chakra-ui/react';
-import { AddIcon } from '@chakra-ui/icons';
 import Task from '../Task/Task';
 import useColumnDrop from '../../hooks/useColumnDrop';
 import { TaskModel } from '../../utils/models';
 import { PopulatedUser, ProjectMember } from '../../api/client';
-import { useAuth } from '../../hooks/useAuth';
-
-// Helper to get user ID from PopulatedUser or string
-function getUserId(
-  userObj: string | PopulatedUser | null | undefined,
-): string | null {
-  if (!userObj) return null;
-  if (typeof userObj === 'string') return userObj;
-  return userObj._id;
-}
 
 function ProjectColumn({
   column,
   title,
   tasks,
-  onCreate,
   onUpdate,
   onDelete,
   onMoveToBacklog,
@@ -44,7 +31,6 @@ function ProjectColumn({
   // user-facing title (optional). If omitted, `column` is used.
   title?: string;
   tasks: TaskModel[];
-  onCreate: (column: string) => void;
   onUpdate: (id: string, patch: Partial<TaskModel>) => void;
   onDelete: (id: string) => void;
   onMoveToBacklog?: (id: string) => void;
@@ -55,14 +41,6 @@ function ProjectColumn({
   wipLimit?: number;
 }) {
   const { dropRef, isOver } = useColumnDrop(column, onDropFrom);
-  const { user } = useAuth();
-
-  // Color mode values - must be called unconditionally
-  const buttonColor = useColorModeValue('gray.800', 'gray.600');
-
-  // Check if current user is the project owner
-  const isOwner =
-    user && projectOwnerId && getUserId(projectOwnerId) === user.id;
 
   const currentCount = tasks.length;
   const isWipExceed =
@@ -114,20 +92,6 @@ function ProjectColumn({
             {showWipIndicator && `(${currentCount}/${wipLimit})`}
           </Badge>
         </Heading>
-        {/* Only show create button to project owner */}
-        {isOwner && (
-          <IconButton
-            size="sm"
-            minW="44px"
-            color={buttonColor}
-            rounded="xl"
-            variant="solid"
-            fontSize="lg"
-            onClick={() => onCreate(column)}
-            aria-label="add-task"
-            icon={<AddIcon />}
-          />
-        )}
       </Flex>
       <Stack
         ref={dropRef}

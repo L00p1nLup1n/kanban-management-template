@@ -29,6 +29,7 @@ import ProjectNavigation from '../../components/Project/ProjectNavigation';
 import ProjectError from '../../components/Project/ProjectError';
 import BacklogTaskItem from '../../components/Backlog/BacklogTaskItem';
 import MoveToColumnDialog from '../../components/Backlog/MoveToColumnDialog';
+import CreateBacklogTaskModal from '../../components/Backlog/CreateBacklogTaskModal';
 import MetricsView from '../../components/Metrics/MetricsView';
 import {
   SettingsIcon,
@@ -84,7 +85,6 @@ export default function ProjectView() {
     error: boardError,
     columns,
     load,
-    createTask,
     updateTask,
     deleteTask,
     moveTask,
@@ -118,6 +118,7 @@ export default function ProjectView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [isCreateBacklogOpen, setIsCreateBacklogOpen] = useState(false);
 
   // Check if current user is the project owner
   const isOwner = Boolean(
@@ -177,35 +178,6 @@ export default function ProjectView() {
   if (error && typeof error === 'object' && 'status' in error) {
     return <ProjectError status={error.status} message={error.message} />;
   }
-
-  // Board handlers
-  const handleCreate = (column: string) => {
-    const colMeta = projectColumns.find(
-      (c: ProjectColumnMeta) => c.key === column,
-    );
-    const wip = colMeta?.wip;
-    const count = colsLocal[column]?.length || 0;
-    if (wip !== undefined && wip > 0 && count >= wip) {
-      toast({
-        title: 'WIP limit reached',
-        description: `Cannot add task to ${column} (WIP ${wip})`,
-        status: 'warning',
-      });
-      return;
-    } else {
-      createTask({ column, title: 'New task' }).catch((err: any) => {
-        const errorMessage =
-          err?.response?.data?.error || 'Failed to create task';
-        toast({
-          title: 'Error',
-          description: errorMessage,
-          status: 'error',
-          duration: 5000,
-          isClosable: true,
-        });
-      });
-    }
-  };
 
   const handleUpdate = (id: string, patch: Partial<TaskModel>) => {
     updateTask(id, patch).catch((err: any) => {
@@ -281,14 +253,16 @@ export default function ProjectView() {
   };
 
   // Backlog handlers
-  const handleCreateBacklogTask = async () => {
+  const handleCreateBacklogTask = () => setIsCreateBacklogOpen(true);
+
+  const handleConfirmCreateBacklogTask = async (data: {
+    title: string;
+    assigneeId?: string;
+    dueDate?: string;
+  }) => {
     try {
-      await createBacklogTask({ title: 'New backlog item' });
-      toast({
-        title: 'Task created',
-        status: 'success',
-        duration: 2000,
-      });
+      await createBacklogTask(data);
+      toast({ title: 'Task created', status: 'success', duration: 2000 });
     } catch (err: any) {
       toast({
         title: 'Error creating task',
@@ -296,6 +270,7 @@ export default function ProjectView() {
         status: 'error',
         duration: 5000,
       });
+      throw err;
     }
   };
 
@@ -436,7 +411,6 @@ export default function ProjectView() {
               title={colMeta.title}
               wipLimit={colMeta.wip}
               tasks={colsLocal[colMeta.key] || []}
-              onCreate={handleCreate}
               onUpdate={handleUpdate}
               onDelete={handleDelete}
               onMoveToBacklog={isOwner ? handleMoveToBacklog : undefined}
@@ -580,6 +554,13 @@ export default function ProjectView() {
         }}
         columns={projectColumns}
         onMove={handleConfirmMoveToColumn}
+      />
+
+      <CreateBacklogTaskModal
+        isOpen={isCreateBacklogOpen}
+        onClose={() => setIsCreateBacklogOpen(false)}
+        onConfirm={handleConfirmCreateBacklogTask}
+        projectMembers={projectMembers}
       />
     </Box>
   );

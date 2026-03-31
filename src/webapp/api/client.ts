@@ -260,6 +260,8 @@ export const tasksAPI = {
       labels?: string[];
       estimate?: number;
       priority?: 'low' | 'medium' | 'high';
+      assigneeId?: string;
+      dueDate?: string;
     },
   ) => apiClient.post<{ task: Task }>(`/projects/${projectId}/backlog`, data),
   move: (

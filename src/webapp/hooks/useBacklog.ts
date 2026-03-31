@@ -79,6 +79,8 @@ export default function useBacklog(projectId: string) {
       title: string;
       description?: string;
       priority?: 'low' | 'medium' | 'high';
+      assigneeId?: string;
+      dueDate?: string;
     }) => {
       try {
         await tasksAPI.createBacklog(projectId, data);

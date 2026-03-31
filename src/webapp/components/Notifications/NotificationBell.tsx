@@ -78,6 +78,7 @@ export default function NotificationBell({
           onDelete={deleteNotification}
           onLoadMore={fetchMore}
           hasMore={hasMore}
+          onInvitationResponded={markAsRead}
         />
       </Portal>
     </Popover>

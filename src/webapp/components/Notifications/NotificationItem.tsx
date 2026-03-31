@@ -8,6 +8,7 @@ import {
 import { CloseIcon } from '@chakra-ui/icons';
 import { Notification } from '../../api/client';
 import { useNavigate } from 'react-router-dom';
+import InvitationActions from './InvitationActions';
 
 function timeAgo(dateStr: string): string {
   const seconds = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000);
@@ -24,12 +25,14 @@ interface NotificationItemProps {
   notification: Notification;
   onMarkAsRead: (id: string) => void;
   onDelete: (id: string) => void;
+  onInvitationResponded?: (notificationId: string) => void;
 }
 
 export default function NotificationItem({
   notification,
   onMarkAsRead,
   onDelete,
+  onInvitationResponded,
 }: NotificationItemProps) {
   const navigate = useNavigate();
   const unreadBg = useColorModeValue('blue.50', 'blue.900');
@@ -106,6 +109,15 @@ export default function NotificationItem({
           }}
         />
       </HStack>
+      {notification.type === 'invitation' &&
+        notification.metadata?.invitationId != null &&
+        onInvitationResponded && (
+          <InvitationActions
+            invitationId={String(notification.metadata.invitationId)}
+            notificationId={notification._id}
+            onResponded={onInvitationResponded}
+          />
+        )}
     </Box>
   );
 }

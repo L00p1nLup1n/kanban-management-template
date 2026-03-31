@@ -387,6 +387,45 @@ export interface Notification {
   updatedAt: string;
 }
 
+// Invitation types
+export interface Invitation {
+  _id: string;
+  projectId: string | { _id: string; name: string };
+  senderId: string | { _id: string; name: string; email: string };
+  recipientId: string | { _id: string; name: string; email: string };
+  status: 'pending' | 'accepted' | 'declined' | 'cancelled';
+  message?: string;
+  expiresAt: string;
+  createdAt: string;
+}
+
+export const invitationsAPI = {
+  send: (projectId: string, data: { email: string; message?: string }) =>
+    apiClient.post<{ invitation: Invitation }>(
+      `/projects/${projectId}/invitations`,
+      data,
+    ),
+
+  listPending: () =>
+    apiClient.get<{ invitations: Invitation[] }>('/invitations/pending'),
+
+  listForProject: (projectId: string) =>
+    apiClient.get<{ invitations: Invitation[] }>(
+      `/projects/${projectId}/invitations`,
+    ),
+
+  accept: (invitationId: string) =>
+    apiClient.post<{ project: any; message: string }>(
+      `/invitations/${invitationId}/accept`,
+    ),
+
+  decline: (invitationId: string) =>
+    apiClient.post<{ message: string }>(`/invitations/${invitationId}/decline`),
+
+  cancel: (invitationId: string) =>
+    apiClient.delete<{ message: string }>(`/invitations/${invitationId}`),
+};
+
 export const notificationsAPI = {
   list: (params?: { limit?: number; offset?: number; unreadOnly?: boolean }) =>
     apiClient.get<{ notifications: Notification[]; unreadCount: number }>(

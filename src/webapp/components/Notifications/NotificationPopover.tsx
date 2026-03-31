@@ -23,6 +23,7 @@ interface NotificationPopoverProps {
   onDelete: (id: string) => void;
   onLoadMore: () => void;
   hasMore: boolean;
+  onInvitationResponded?: (notificationId: string) => void;
 }
 
 export default function NotificationPopover({
@@ -33,6 +34,7 @@ export default function NotificationPopover({
   onDelete,
   onLoadMore,
   hasMore,
+  onInvitationResponded,
 }: NotificationPopoverProps) {
   const headerBg = useColorModeValue('gray.50', 'gray.700');
   const contentBg = useColorModeValue('white', 'gray.800');
@@ -81,6 +83,7 @@ export default function NotificationPopover({
                 notification={notification}
                 onMarkAsRead={onMarkAsRead}
                 onDelete={onDelete}
+                onInvitationResponded={onInvitationResponded}
               />
             ))}
           </VStack>

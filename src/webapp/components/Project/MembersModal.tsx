@@ -29,6 +29,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { PopulatedUser, ProjectMember, projectsAPI } from '../../api/client';
 import { getRoleColor, getRoleLabel } from '../../utils/roles';
 import { useState, useRef } from 'react';
+import InviteMemberModal from './InviteMemberModal';
 
 interface MembersModalProps {
   isOpen: boolean;
@@ -57,6 +58,11 @@ export default function MembersModal({
     isOpen: isAlertOpen,
     onOpen: onAlertOpen,
     onClose: onAlertClose,
+  } = useDisclosure();
+  const {
+    isOpen: isInviteOpen,
+    onOpen: onInviteOpen,
+    onClose: onInviteClose,
   } = useDisclosure();
   const cancelRef = useRef<HTMLButtonElement>(null);
   const [memberToRemove, setMemberToRemove] = useState<{
@@ -200,9 +206,16 @@ export default function MembersModal({
 
             {/* Members Section */}
             <Box>
-              <Text fontSize="sm" fontWeight="bold" mb={2} color={labelColor}>
-                Members ({members.length})
-              </Text>
+              <HStack justify="space-between" mb={2}>
+                <Text fontSize="sm" fontWeight="bold" color={labelColor}>
+                  Members ({members.length})
+                </Text>
+                {isOwnerCurrentUser && (
+                  <Button size="xs" colorScheme="blue" onClick={onInviteOpen}>
+                    Invite Member
+                  </Button>
+                )}
+              </HStack>
               <VStack align="stretch" spacing={2}>
                 {members.length === 0 ? (
                   <Text fontSize="sm" color={emptyTextColor}>
@@ -297,6 +310,12 @@ export default function MembersModal({
           </VStack>
         </ModalBody>
       </ModalContent>
+
+      <InviteMemberModal
+        isOpen={isInviteOpen}
+        onClose={onInviteClose}
+        projectId={projectId}
+      />
 
       {/* Confirmation Alert Dialog */}
       <AlertDialog

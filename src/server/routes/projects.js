@@ -10,6 +10,10 @@ import {
   joinProjectByCode,
   removeMember,
 } from '../controllers/projectsController.js';
+import {
+  inviteMember,
+  listProjectInvitations,
+} from '../controllers/invitationController.js';
 
 const router = express.Router();
 
@@ -23,5 +27,7 @@ router.get('/:projectId', getProject);
 router.patch('/:projectId', updateProject);
 router.delete('/:projectId', deleteProject);
 router.delete('/:projectId/members/:memberId', removeMember);
+router.post('/:projectId/invitations', inviteMember);
+router.get('/:projectId/invitations', listProjectInvitations);
 
 export default router;

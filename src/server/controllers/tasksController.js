@@ -60,6 +60,27 @@ export const createTask = asyncHandler(async (req, res) => {
     throw new TaskError(409, 'WIP_EXCEEDED');
 
   emitSocket(projectId, 'task:created', { task: result.task });
+
+  // Notify assignee if task was created with an assignment
+  const createAssigneeId = req.body.assigneeId;
+  if (createAssigneeId && createAssigneeId !== req.userId) {
+    try {
+      await createAndDeliverNotification({
+        recipientId: createAssigneeId,
+        type: 'task_assigned',
+        title: `You were assigned to "${result.task.title}"`,
+        metadata: {
+          projectId,
+          taskId: result.task._id,
+          taskTitle: result.task.title,
+        },
+        actionUrl: `/projects/${projectId}`,
+      });
+    } catch (e) {
+      console.warn('Notification error (createTask assignment):', e);
+    }
+  }
+
   return res.status(201).json({ task: result.task });
 });
 
@@ -121,6 +142,27 @@ export const createBacklogTask = asyncHandler(async (req, res) => {
     throw new TaskError(403, 'Only the project owner can create tasks');
 
   emitSocket(projectId, 'task:created', { task: result.task });
+
+  // Notify assignee if backlog task was created with an assignment
+  const backlogAssigneeId = req.body.assigneeId;
+  if (backlogAssigneeId && backlogAssigneeId !== req.userId) {
+    try {
+      await createAndDeliverNotification({
+        recipientId: backlogAssigneeId,
+        type: 'task_assigned',
+        title: `You were assigned to "${result.task.title}"`,
+        metadata: {
+          projectId,
+          taskId: result.task._id,
+          taskTitle: result.task.title,
+        },
+        actionUrl: `/projects/${projectId}`,
+      });
+    } catch (e) {
+      console.warn('Notification error (createBacklogTask assignment):', e);
+    }
+  }
+
   return res.status(201).json({ task: result.task });
 });
 

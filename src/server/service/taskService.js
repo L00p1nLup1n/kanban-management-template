@@ -59,6 +59,7 @@ export async function createBoardTask(project, userId, taskData) {
     labels,
     estimate,
     priority,
+    assigneeId,
   } = taskData;
 
   if (!title || order === undefined) {
@@ -104,6 +105,7 @@ export async function createBoardTask(project, userId, taskData) {
     labels,
     estimate,
     priority,
+    assigneeId: assigneeId || undefined,
     createdBy: userId,
     committedAt: now,
   });
@@ -240,7 +242,8 @@ export async function updateTask(project, taskId, userId, updates) {
 }
 
 export async function createBacklogTask(project, userId, taskData) {
-  const { title, description, color, labels, estimate, priority } = taskData;
+  const { title, description, color, labels, estimate, priority, assigneeId } =
+    taskData;
 
   if (!title) {
     return {
@@ -262,6 +265,7 @@ export async function createBacklogTask(project, userId, taskData) {
     labels,
     estimate,
     priority,
+    assigneeId: assigneeId || undefined,
     order: Date.now(),
     createdBy: userId,
     backlog: true,

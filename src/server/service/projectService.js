@@ -13,6 +13,7 @@ import { generateUniqueJoinCode } from '../utils/projectUtils.js';
 import { v4 as uuidv4 } from 'uuid';
 import { DEFAULT_COLUMNS_TEMPLATE } from '../helpers/defaultColumns.js';
 import { findById as findUserById } from '../repository/userRepository.js';
+import { findAllProjectTasks } from '../repository/taskRepository.js';
 
 export async function listProjectsForUser(userId) {
   const projects = await findProjects(userId);
@@ -41,12 +42,14 @@ export async function createProjectWithProjectData(
   name,
   description,
   columns,
+  budget,
 ) {
   const joinCode = await generateUniqueJoinCode();
   const projectData = {
     ownerId: userId,
     name,
     description,
+    budget,
     columns:
       columns ||
       // copy all the properties of each column can generate a unique id
@@ -62,6 +65,7 @@ export async function updateProjectSettings(projectId, updates) {
   if (updates.description !== undefined)
     updateFields.description = updates.description;
   if (updates.columns !== undefined) updateFields.columns = updates.columns;
+  if (updates.budget !== undefined) updateFields.budget = updates.budget;
 
   return await updateProjectById(projectId, updateFields);
 }
@@ -86,7 +90,14 @@ export async function joinProject(userId, joinCode) {
   const user = await findUserById(userId);
   const role = user ? user.role : 'developer';
   const updatedProject = await addMemberToProject(project._id, userId, role);
-  return { outcome: 'joined', project: updatedProject };
+  return { outcome: 'joined', project: updatedProject, joiner: user };
+}
+
+export async function getProjectBudget(projectId) {
+  const tasks = await findAllProjectTasks(projectId);
+  const tasksWithCost = tasks.filter((t) => t.cost != null);
+  const totalCost = tasksWithCost.reduce((sum, t) => sum + t.cost, 0);
+  return { tasksWithCost, totalCost };
 }
 
 export async function removeProjectMember(

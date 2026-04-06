@@ -43,6 +43,10 @@ export async function findAllBoardTasks(projectId) {
   return await Task.find({ projectId, backlog: { $ne: true } });
 }
 
+export async function findAllProjectTasks(projectId) {
+  return await Task.find({ projectId }).select('title cost columnKey backlog');
+}
+
 export async function bulkWriteTasks(operations) {
   return await Task.bulkWrite(operations);
 }

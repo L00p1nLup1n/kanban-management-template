@@ -11,6 +11,7 @@ interface BacklogTask {
   assigneeId?: string;
   assignee?: PopulatedUser;
   dueDate?: string;
+  cost?: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -24,6 +25,7 @@ export interface BacklogTaskModel {
   assigneeId?: string;
   assignee?: PopulatedUser;
   dueDate?: string;
+  cost?: number;
   createdAt: string;
 }
 
@@ -37,6 +39,7 @@ function mapServerTaskToModel(t: BacklogTask): BacklogTaskModel {
     assigneeId: t.assigneeId,
     assignee: t.assignee,
     dueDate: t.dueDate,
+    cost: t.cost,
     createdAt: t.createdAt,
   };
 }

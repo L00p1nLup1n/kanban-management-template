@@ -88,6 +88,7 @@ export interface Project {
   updatedAt: string;
   joinCode?: string;
   members?: ProjectMember[];
+  budget?: number;
 }
 
 export interface Column {
@@ -109,6 +110,7 @@ export interface Task {
   assigneeId?: string;
   labels?: string[];
   estimate?: number;
+  cost?: number;
   dueDate?: string;
   priority?: 'low' | 'medium' | 'high';
   createdBy: string;
@@ -186,14 +188,36 @@ export const authAPI = {
   me: () => apiClient.get<{ user: User }>('/auth/me'),
 };
 
+export interface BudgetTask {
+  _id: string;
+  title: string;
+  cost: number;
+  columnKey?: string;
+  backlog?: boolean;
+}
+
+export interface ProjectBudget {
+  budget: number | null;
+  totalCost: number;
+  remaining: number | null;
+  tasks: BudgetTask[];
+}
+
 export const projectsAPI = {
   list: () => apiClient.get<{ projects: Project[] }>('/projects'),
 
   get: (projectId: string) =>
     apiClient.get<{ project: Project }>(`/projects/${projectId}`),
 
-  create: (data: { name: string; description?: string; columns?: Column[] }) =>
-    apiClient.post<{ project: Project }>('/projects', data),
+  create: (data: {
+    name: string;
+    description?: string;
+    columns?: Column[];
+    budget?: number;
+  }) => apiClient.post<{ project: Project }>('/projects', data),
+
+  getBudget: (projectId: string) =>
+    apiClient.get<ProjectBudget>(`/projects/${projectId}/budget`),
 
   joinByCode: (joinCode: string) =>
     apiClient.post<{ project: Project }>('/projects/join', { joinCode }),

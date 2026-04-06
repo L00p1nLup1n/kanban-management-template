@@ -31,6 +31,7 @@ import BacklogTaskItem from '../../components/Backlog/BacklogTaskItem';
 import MoveToColumnDialog from '../../components/Backlog/MoveToColumnDialog';
 import EditBacklogTaskModal from '../../components/Backlog/EditBacklogTaskModal';
 import MetricsView from '../../components/Metrics/MetricsView';
+import BudgetSummary from '../../components/Budget/BudgetSummary';
 import {
   SettingsIcon,
   ArrowBackIcon,
@@ -74,10 +75,10 @@ export default function ProjectView() {
   const { user } = useAuth();
   const toast = useToast();
 
-  // View state: 'board', 'backlog', or 'metrics'
-  const [activeView, setActiveView] = useState<'board' | 'backlog' | 'metrics'>(
-    'board',
-  );
+  // View state: 'board', 'backlog', 'metrics', or 'budget'
+  const [activeView, setActiveView] = useState<
+    'board' | 'backlog' | 'metrics' | 'budget'
+  >('board');
 
   // Board data
   const {
@@ -519,6 +520,7 @@ export default function ProjectView() {
 
       {/* Metrics View */}
       {activeView === 'metrics' && <MetricsView projectId={projectId || ''} />}
+      {activeView === 'budget' && <BudgetSummary projectId={projectId || ''} />}
 
       {/* Settings Modal */}
       {isOwner && (

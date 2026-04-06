@@ -53,6 +53,7 @@ export default function EditBacklogTaskModal({
     useState<BacklogTaskModel['priority']>('medium');
   const [assigneeId, setAssigneeId] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [cost, setCost] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -61,6 +62,7 @@ export default function EditBacklogTaskModal({
       setPriority(task?.priority ?? 'medium');
       setAssigneeId(task?.assigneeId ?? '');
       setDueDate(task?.dueDate ? task.dueDate.slice(0, 10) : '');
+      setCost(task?.cost != null ? String(task.cost) : '');
     }
   }, [isOpen, task]);
 
@@ -73,6 +75,7 @@ export default function EditBacklogTaskModal({
         priority: priority || undefined,
         assigneeId: assigneeId || undefined,
         dueDate: dueDate || undefined,
+        cost: cost ? Number(cost) : undefined,
       });
       onClose();
     } finally {
@@ -140,6 +143,17 @@ export default function EditBacklogTaskModal({
               <DateInput
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+              />
+            </FormControl>
+
+            <FormControl>
+              <FormLabel>Cost (optional)</FormLabel>
+              <Input
+                type="number"
+                min={0}
+                value={cost}
+                onChange={(e) => setCost(e.target.value)}
+                placeholder="e.g. 500"
               />
             </FormControl>
           </VStack>

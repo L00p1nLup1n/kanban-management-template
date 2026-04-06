@@ -29,16 +29,22 @@ function CreateProjectModal({
   const toast = useToast();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [budget, setBudget] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   async function handleCreate() {
     setIsLoading(true);
     try {
-      const res = await projectsAPI.create({ name, description });
+      const res = await projectsAPI.create({
+        name,
+        description,
+        budget: budget ? Number(budget) : undefined,
+      });
       const created = res.data.project;
       onProjectCreated(created);
       setName('');
       setDescription('');
+      setBudget('');
       onClose();
       toast({ title: 'Project created', status: 'success' });
     } catch (err: unknown) {
@@ -72,6 +78,16 @@ function CreateProjectModal({
               <Input
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel>Budget (optional)</FormLabel>
+              <Input
+                type="number"
+                min={0}
+                value={budget}
+                onChange={(e) => setBudget(e.target.value)}
+                placeholder="e.g. 10000"
               />
             </FormControl>
             <Button

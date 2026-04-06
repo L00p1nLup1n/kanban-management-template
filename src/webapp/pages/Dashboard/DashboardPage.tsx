@@ -45,7 +45,7 @@ function DashboardPage() {
     <Container maxW="container.xl" py={8}>
       <Stack spacing={6}>
         <HStack justify="space-between" align="center">
-          <Heading>PM Dashboard</Heading>
+          <Heading>Dashboard</Heading>
           <HStack spacing={2}>
             <Text fontSize="sm" whiteSpace="nowrap">
               Period:

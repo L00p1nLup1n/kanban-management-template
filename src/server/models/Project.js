@@ -28,6 +28,8 @@ const ProjectSchema = new Schema(
     ],
     // short join code used for inviting members
     joinCode: { type: String, index: true },
+    // optional project budget (in currency units)
+    budget: { type: Number },
   },
   { timestamps: true },
 );

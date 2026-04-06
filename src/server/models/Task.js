@@ -14,6 +14,7 @@ const TaskSchema = new Schema(
     assigneeId: { type: Schema.Types.ObjectId, ref: 'User' },
     labels: [{ type: String }],
     estimate: { type: Number },
+    cost: { type: Number },
     dueDate: { type: Date },
     // Scrumban properties
     priority: {

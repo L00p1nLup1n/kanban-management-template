@@ -14,6 +14,7 @@ import {
   inviteMember,
   listProjectInvitations,
 } from '../controllers/invitationController.js';
+import { getBudget } from '../controllers/budgetController.js';
 
 const router = express.Router();
 
@@ -29,5 +30,6 @@ router.delete('/:projectId', deleteProject);
 router.delete('/:projectId/members/:memberId', removeMember);
 router.post('/:projectId/invitations', inviteMember);
 router.get('/:projectId/invitations', listProjectInvitations);
+router.get('/:projectId/budget', getBudget);
 
 export default router;

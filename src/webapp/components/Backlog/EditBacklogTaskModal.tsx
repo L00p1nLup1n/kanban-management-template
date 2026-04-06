@@ -13,6 +13,7 @@ import {
   VStack,
   Select,
 } from '@chakra-ui/react';
+import DateInput from '../DateInput/DateInput';
 import { useState, useEffect } from 'react';
 import { ProjectMember, PopulatedUser } from '../../api/client';
 import { BacklogTaskModel } from '../../hooks/useBacklog';
@@ -136,8 +137,7 @@ export default function EditBacklogTaskModal({
 
             <FormControl>
               <FormLabel>Due Date</FormLabel>
-              <Input
-                type="date"
+              <DateInput
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
               />

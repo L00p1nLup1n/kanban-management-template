@@ -39,6 +39,7 @@ import _ from 'lodash';
 import { TaskModel } from '../../utils/models';
 import { PopulatedUser, ProjectMember } from '../../api/client';
 import { useAuth } from '../../hooks/useAuth';
+import DateInput from '../DateInput/DateInput';
 
 // Helper to get user ID from PopulatedUser or string
 function getUserId(
@@ -483,11 +484,9 @@ function Task({
                     <FormLabel fontSize="sm" mb={1}>
                       Deadline
                     </FormLabel>
-                    <Input
-                      type="date"
+                    <DateInput
                       value={localDueDate}
                       onChange={(e) => setLocalDueDate(e.target.value)}
-                      placeholder="No deadline"
                     />
                   </PopoverBody>
                   <PopoverFooter display="flex" gap={2}>

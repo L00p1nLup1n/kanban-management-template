@@ -58,6 +58,7 @@ export async function createBoardTask(project, userId, taskData) {
     color,
     labels,
     estimate,
+    cost,
     priority,
     assigneeId,
   } = taskData;
@@ -104,6 +105,7 @@ export async function createBoardTask(project, userId, taskData) {
     color,
     labels,
     estimate,
+    cost,
     priority,
     assigneeId: assigneeId || undefined,
     createdBy: userId,
@@ -196,6 +198,7 @@ export async function updateTask(project, taskId, userId, updates) {
       'assigneeId',
       'labels',
       'estimate',
+      'cost',
       'priority',
       'backlog',
       'dueDate',
@@ -242,8 +245,16 @@ export async function updateTask(project, taskId, userId, updates) {
 }
 
 export async function createBacklogTask(project, userId, taskData) {
-  const { title, description, color, labels, estimate, priority, assigneeId } =
-    taskData;
+  const {
+    title,
+    description,
+    color,
+    labels,
+    estimate,
+    cost,
+    priority,
+    assigneeId,
+  } = taskData;
 
   if (!title) {
     return {
@@ -264,6 +275,7 @@ export async function createBacklogTask(project, userId, taskData) {
     color,
     labels,
     estimate,
+    cost,
     priority,
     assigneeId: assigneeId || undefined,
     order: Date.now(),

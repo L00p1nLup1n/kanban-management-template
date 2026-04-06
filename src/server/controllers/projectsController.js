@@ -15,7 +15,6 @@ import {
 } from '../utils/authUtils.js';
 import { getIO } from '../socket.js';
 import { createAndDeliverNotification } from '../service/notificationService.js';
-import { findById as findUserById } from '../repository/userRepository.js';
 
 export const listProjects = asyncHandler(async (req, res) => {
   const userId = req.userId;
@@ -42,7 +41,7 @@ export const getProject = asyncHandler(async (req, res) => {
 });
 
 export const createProject = asyncHandler(async (req, res) => {
-  const { name, description, columns } = req.body;
+  const { name, description, columns, budget } = req.body;
   const userId = req.userId;
 
   if (!name) {
@@ -54,6 +53,7 @@ export const createProject = asyncHandler(async (req, res) => {
     name,
     description,
     columns,
+    budget,
   );
 
   return res.status(201).json({ project });
@@ -61,7 +61,7 @@ export const createProject = asyncHandler(async (req, res) => {
 
 export const updateProject = asyncHandler(async (req, res) => {
   const { projectId } = req.params;
-  const { name, description, columns } = req.body;
+  const { name, description, columns, budget } = req.body;
   const userId = req.userId;
 
   const project = await findProjectById(projectId);
@@ -80,6 +80,7 @@ export const updateProject = asyncHandler(async (req, res) => {
     name,
     description,
     columns,
+    budget,
   });
 
   // Socket emit for real-time sync
@@ -131,7 +132,7 @@ export const joinProjectByCode = asyncHandler(async (req, res) => {
     return res.json({ project: result.project, message: 'Already a member' });
   }
   // outcome === 'joined' — emit socket events
-  const { project } = result;
+  const { project, joiner } = result;
 
   try {
     const io = getIO();
@@ -158,7 +159,6 @@ export const joinProjectByCode = asyncHandler(async (req, res) => {
 
   // Notify the project owner that a new member joined
   try {
-    const joiner = await findUserById(userId);
     const joinerName = joiner?.name || joiner?.email || 'Someone';
     const ownerId = project.ownerId._id || project.ownerId;
     await createAndDeliverNotification({

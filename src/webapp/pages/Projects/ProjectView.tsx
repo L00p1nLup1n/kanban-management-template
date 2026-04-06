@@ -20,7 +20,7 @@ import ProjectColumn from '../../components/ProjectColumn/ProjectColumn';
 import useProjectTasks, {
   ProjectColumn as ProjectColumnMeta,
 } from '../../hooks/useProjectTasks';
-import useBacklog from '../../hooks/useBacklog';
+import useBacklog, { BacklogTaskModel } from '../../hooks/useBacklog';
 import { TaskModel } from '../../utils/models';
 import { useEffect, useState, useMemo } from 'react';
 import ColumnSettingsModal from '../../components/Project/ColumnSettingsModal';
@@ -29,7 +29,7 @@ import ProjectNavigation from '../../components/Project/ProjectNavigation';
 import ProjectError from '../../components/Project/ProjectError';
 import BacklogTaskItem from '../../components/Backlog/BacklogTaskItem';
 import MoveToColumnDialog from '../../components/Backlog/MoveToColumnDialog';
-import CreateBacklogTaskModal from '../../components/Backlog/CreateBacklogTaskModal';
+import EditBacklogTaskModal from '../../components/Backlog/EditBacklogTaskModal';
 import MetricsView from '../../components/Metrics/MetricsView';
 import {
   SettingsIcon,
@@ -118,7 +118,10 @@ export default function ProjectView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
-  const [isCreateBacklogOpen, setIsCreateBacklogOpen] = useState(false);
+  // undefined = closed, null = create mode, BacklogTaskModel = edit mode
+  const [backlogModal, setBacklogModal] = useState<
+    BacklogTaskModel | null | undefined
+  >(undefined);
 
   // Check if current user is the project owner
   const isOwner = Boolean(
@@ -253,37 +256,29 @@ export default function ProjectView() {
   };
 
   // Backlog handlers
-  const handleCreateBacklogTask = () => setIsCreateBacklogOpen(true);
+  const handleCreateBacklogTask = () => setBacklogModal(null);
 
-  const handleConfirmCreateBacklogTask = async (data: {
-    title: string;
-    assigneeId?: string;
-    dueDate?: string;
-  }) => {
+  const handleConfirmBacklogModal = async (
+    data: Partial<BacklogTaskModel> & { title: string },
+  ) => {
     try {
-      await createBacklogTask(data);
-      toast({ title: 'Task created', status: 'success', duration: 2000 });
+      if (backlogModal === null) {
+        // create mode
+        await createBacklogTask(data);
+        toast({ title: 'Task created', status: 'success', duration: 2000 });
+      } else if (backlogModal) {
+        // edit mode
+        await updateBacklogTask(backlogModal.id, data);
+        toast({ title: 'Task updated', status: 'success', duration: 2000 });
+      }
     } catch (err: any) {
       toast({
-        title: 'Error creating task',
-        description: err?.response?.data?.error || 'Failed to create task',
+        title: 'Error',
+        description: err?.response?.data?.error || 'Operation failed',
         status: 'error',
         duration: 5000,
       });
       throw err;
-    }
-  };
-
-  const handleUpdateBacklogTask = async (taskId: string, patch: any) => {
-    try {
-      await updateBacklogTask(taskId, patch);
-    } catch (err: any) {
-      toast({
-        title: 'Error updating task',
-        description: err?.response?.data?.error || 'Failed to update task',
-        status: 'error',
-        duration: 5000,
-      });
     }
   };
 
@@ -342,22 +337,27 @@ export default function ProjectView() {
   };
 
   return (
-    <Box position="relative" minH="100vh">
+    <Box
+      position="relative"
+      minH="100vh"
+      px={{ base: 4, md: 8, lg: 12 }}
+      py={4}
+    >
       {/* Header */}
-      <Box mb={4} mt={4}>
+      <Box mb={4}>
         <Heading textAlign="center" w="full">
           {projectName || 'No project found'}
         </Heading>
 
         {/* Back button top-left */}
-        <Box position="absolute" top="8px" left="8px">
+        <Box position="absolute" top="22px" left={{ base: 4, md: 8, lg: 12 }}>
           <HStack spacing={2}>
             <BackButton />
           </HStack>
         </Box>
 
         {/* User name + settings top-right */}
-        <Box position="absolute" top="8px" right="8px">
+        <Box position="absolute" top="22px" right={{ base: 4, md: 8, lg: 12 }}>
           <HStack spacing={2}>
             <UsernameDisplay />
             <Button
@@ -507,9 +507,9 @@ export default function ProjectView() {
                   key={task.id}
                   task={task}
                   isOwner={isOwner}
-                  onUpdate={(patch) => handleUpdateBacklogTask(task.id, patch)}
                   onDelete={() => handleDeleteBacklogTask(task.id)}
                   onMoveToColumn={() => handleMoveToColumnClick(task.id)}
+                  onEdit={isOwner ? () => setBacklogModal(task) : undefined}
                 />
               ))
             )}
@@ -556,10 +556,11 @@ export default function ProjectView() {
         onMove={handleConfirmMoveToColumn}
       />
 
-      <CreateBacklogTaskModal
-        isOpen={isCreateBacklogOpen}
-        onClose={() => setIsCreateBacklogOpen(false)}
-        onConfirm={handleConfirmCreateBacklogTask}
+      <EditBacklogTaskModal
+        isOpen={backlogModal !== undefined}
+        onClose={() => setBacklogModal(undefined)}
+        task={backlogModal ?? null}
+        onConfirm={handleConfirmBacklogModal}
         projectMembers={projectMembers}
       />
     </Box>
